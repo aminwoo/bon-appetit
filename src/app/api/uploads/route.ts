@@ -22,15 +22,29 @@ export async function POST(request: Request) {
     )
   }
 
+  const blobToken = process.env.BLOB_READ_WRITE_TOKEN?.trim()
+  if (!blobToken) {
+    console.error('Blob upload unavailable: BLOB_READ_WRITE_TOKEN is missing', {
+      vercelEnv: process.env.VERCEL_ENV ?? 'unknown',
+      hasBlobStoreId: Boolean(process.env.BLOB_STORE_ID),
+    })
+    return NextResponse.json(
+      { error: 'Image uploads are not configured for this deployment.' },
+      { status: 503 },
+    )
+  }
+
   try {
     const blob = await put(`recipes/${file.name}`, file, {
       access: 'public',
       addRandomSuffix: true,
       contentType: file.type,
+      token: blobToken,
     })
 
     return NextResponse.json({ url: blob.url })
-  } catch {
+  } catch (error) {
+    console.error('Vercel Blob upload failed', error)
     return NextResponse.json(
       { error: 'Could not upload the image. Check your Blob configuration.' },
       { status: 500 },
