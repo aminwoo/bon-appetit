@@ -135,7 +135,8 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     proteinTotal: 'protein total',
     yourWeeklyTable: 'Your weekly table',
     makeRoomForGoodFood: 'Make room for good food.',
-    shapeTheWeek: 'Shape the week, balance each day, then turn the whole plan into one clean shopping list.',
+    shapeTheWeek:
+      'Shape the week, balance each day, then turn the whole plan into one clean shopping list.',
     mealPlan: 'Meal plan',
     breakfast: 'Breakfast',
     lunch: 'Lunch',
@@ -156,7 +157,8 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     chooseMealType: 'Choose at least one meal type above.',
     yourCollection: 'Your collection',
     recipesWorthRepeating: 'Recipes worth repeating.',
-    createOrAdapt: 'Create your own recipes or adapt one of the built-in favourites.',
+    createOrAdapt:
+      'Create your own recipes or adapt one of the built-in favourites.',
     addRecipe: 'Add recipe',
     demoMode: 'Demo mode.',
     saveRecipesHint: 'Add DATABASE_URL to save new recipes and edits.',
@@ -194,7 +196,8 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     newRecipe: 'New recipe',
     refineDetails: 'Refine the details.',
     addSomething: 'Add something delicious.',
-    nutritionHint: 'Quantities stay strictly metric. Nutrition values are recorded per serving.',
+    nutritionHint:
+      'Quantities stay strictly metric. Nutrition values are recorded per serving.',
     recipePhotoUrl: 'Recipe photo URL',
     uploadImage: 'Upload image',
     uploading: 'Uploading…',
@@ -226,7 +229,8 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     recipeLink: 'Recipe link',
     importRecipe: 'Import recipe',
     importingRecipe: 'Importing…',
-    importHint: 'Paste a recipe page link. Imported quantities are metric estimates, so review them before saving.',
+    importHint:
+      'Paste a recipe page link. Imported quantities are metric estimates, so review them before saving.',
   },
   zh: {
     plan: '计划',
@@ -243,7 +247,8 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     proteinTotal: '蛋白质总量',
     yourWeeklyTable: '你的每周餐桌',
     makeRoomForGoodFood: '为好食物留出空间。',
-    shapeTheWeek: '安排一周菜单，平衡每一天，再把整份计划变成一张清晰的购物清单。',
+    shapeTheWeek:
+      '安排一周菜单，平衡每一天，再把整份计划变成一张清晰的购物清单。',
     mealPlan: '用餐计划',
     breakfast: '早餐',
     lunch: '午餐',
@@ -366,15 +371,24 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   }
 
   const value = useMemo(
-    () => ({ language, setLanguage, t: (key: TranslationKey) => translations[language][key] }),
+    () => ({
+      language,
+      setLanguage,
+      t: (key: TranslationKey) => translations[language][key],
+    }),
     [language],
   )
 
-  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>
+  return (
+    <LanguageContext.Provider value={value}>
+      {children}
+    </LanguageContext.Provider>
+  )
 }
 
 export function useLanguage() {
   const context = useContext(LanguageContext)
-  if (!context) throw new Error('useLanguage must be used inside LanguageProvider')
+  if (!context)
+    throw new Error('useLanguage must be used inside LanguageProvider')
   return context
 }

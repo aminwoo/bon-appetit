@@ -23,16 +23,28 @@ function isPrivateHost(hostname: string) {
       (first === 192 && second === 168)
     )
   }
-  return isIP(host) === 6 && (host === '::1' || host.startsWith('fc') || host.startsWith('fd') || host.startsWith('fe80'))
+  return (
+    isIP(host) === 6 &&
+    (host === '::1' ||
+      host.startsWith('fc') ||
+      host.startsWith('fd') ||
+      host.startsWith('fe80'))
+  )
 }
 
 async function validateUrl(value: string) {
   const url = new URL(value)
-  if (!['http:', 'https:'].includes(url.protocol) || isPrivateHost(url.hostname)) {
+  if (
+    !['http:', 'https:'].includes(url.protocol) ||
+    isPrivateHost(url.hostname)
+  ) {
     throw new Error('Enter a public HTTP or HTTPS recipe URL.')
   }
   const addresses = await lookup(url.hostname, { all: true })
-  if (!addresses.length || addresses.some(({ address }) => isPrivateHost(address))) {
+  if (
+    !addresses.length ||
+    addresses.some(({ address }) => isPrivateHost(address))
+  ) {
     throw new Error('The recipe URL must resolve to a public website.')
   }
   return url
@@ -53,18 +65,23 @@ async function fetchRecipePage(initialUrl: URL) {
 
     if (response.status >= 300 && response.status < 400) {
       const location = response.headers.get('location')
-      if (!location || redirect === maxRedirects) throw new Error('The recipe page redirected too many times.')
+      if (!location || redirect === maxRedirects)
+        throw new Error('The recipe page redirected too many times.')
       url = await validateUrl(new URL(location, url).toString())
       continue
     }
 
-    if (!response.ok) throw new Error(`The recipe page returned HTTP ${response.status}.`)
+    if (!response.ok)
+      throw new Error(`The recipe page returned HTTP ${response.status}.`)
     const contentType = response.headers.get('content-type') ?? ''
-    if (!contentType.includes('text/html')) throw new Error('The URL does not point to an HTML page.')
+    if (!contentType.includes('text/html'))
+      throw new Error('The URL does not point to an HTML page.')
     const contentLength = Number(response.headers.get('content-length') ?? 0)
-    if (contentLength > maxHtmlBytes) throw new Error('The recipe page is too large to import.')
+    if (contentLength > maxHtmlBytes)
+      throw new Error('The recipe page is too large to import.')
     const html = await response.text()
-    if (Buffer.byteLength(html) > maxHtmlBytes) throw new Error('The recipe page is too large to import.')
+    if (Buffer.byteLength(html) > maxHtmlBytes)
+      throw new Error('The recipe page is too large to import.')
     return html
   }
 
@@ -77,7 +94,8 @@ export async function POST(request: Request) {
     const html = await fetchRecipePage(await validateUrl(rawUrl))
     return NextResponse.json({ recipe: parseRecipeHtml(html) })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Could not import this recipe.'
+    const message =
+      error instanceof Error ? error.message : 'Could not import this recipe.'
     return NextResponse.json({ error: message }, { status: 400 })
   }
 }

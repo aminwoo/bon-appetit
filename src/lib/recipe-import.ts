@@ -61,18 +61,25 @@ function isRecord(value: unknown): value is JsonRecord {
 
 function text(value: unknown) {
   return typeof value === 'string'
-    ? value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+    ? value
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
     : ''
 }
 
 function numberFrom(value: unknown) {
-  const match = text(value).replace(/,/g, '').match(/-?\d+(?:\.\d+)?/)
+  const match = text(value)
+    .replace(/,/g, '')
+    .match(/-?\d+(?:\.\d+)?/)
   return match ? Number(match[0]) : 0
 }
 
 function parseDuration(value: unknown) {
   const duration = text(value)
-  const iso = duration.match(/^P(?:([\d.]+)D)?(?:T(?:([\d.]+)H)?(?:([\d.]+)M)?)?$/i)
+  const iso = duration.match(
+    /^P(?:([\d.]+)D)?(?:T(?:([\d.]+)H)?(?:([\d.]+)M)?)?$/i,
+  )
   if (iso) {
     return Math.round(
       Number(iso[1] ?? 0) * 1440 +
@@ -95,7 +102,9 @@ function parseQuantity(raw: string) {
     .replace(/(\d+)\s*\/\s*(\d+)/g, (_, top, bottom) =>
       String(Number(top) / Number(bottom)),
     )
-  const match = normalized.match(/^\s*(\d+(?:\.\d+)?)(?:\s*[-–]\s*(\d+(?:\.\d+)?))?\s*/)
+  const match = normalized.match(
+    /^\s*(\d+(?:\.\d+)?)(?:\s*[-–]\s*(\d+(?:\.\d+)?))?\s*/,
+  )
   if (!match) return { quantity: 1, remainder: normalized.trim() }
   const first = Number(match[1])
   const second = match[2] ? Number(match[2]) : first
@@ -108,9 +117,18 @@ function parseQuantity(raw: string) {
 function categoryFor(name: string): IngredientCategory {
   const value = name.toLowerCase()
   if (/butter|milk|cream|cheese|yogurt|egg/.test(value)) return 'Dairy'
-  if (/chicken|beef|pork|lamb|turkey|fish|salmon|prawn|shrimp|bacon/.test(value)) return 'Meat'
-  if (/salt|pepper|paprika|cumin|cinnamon|spice|chili|chilli/.test(value)) return 'Spices'
-  if (/garlic|onion|parsley|basil|herb|lemon|lime|tomato|potato|carrot|spinach|broccoli|vegetable|fruit/.test(value)) return 'Produce'
+  if (
+    /chicken|beef|pork|lamb|turkey|fish|salmon|prawn|shrimp|bacon/.test(value)
+  )
+    return 'Meat'
+  if (/salt|pepper|paprika|cumin|cinnamon|spice|chili|chilli/.test(value))
+    return 'Spices'
+  if (
+    /garlic|onion|parsley|basil|herb|lemon|lime|tomato|potato|carrot|spinach|broccoli|vegetable|fruit/.test(
+      value,
+    )
+  )
+    return 'Produce'
   return 'Pantry'
 }
 
@@ -118,13 +136,18 @@ function parseIngredient(rawValue: unknown): Ingredient | null {
   const raw = text(rawValue).replace(/^[▢□☐]\s*/, '')
   if (!raw) return null
   const { quantity, remainder } = parseQuantity(raw)
-  const unitNames = [...Object.keys(volumeUnits), ...Object.keys(massUnits)].sort(
-    (left, right) => right.length - left.length,
+  const unitNames = [
+    ...Object.keys(volumeUnits),
+    ...Object.keys(massUnits),
+  ].sort((left, right) => right.length - left.length)
+  const unitPattern = new RegExp(
+    `^(${unitNames.map((unit) => unit.replace(/ /g, '\\s+')).join('|')})\\b\\.?\\s*`,
+    'i',
   )
-  const unitPattern = new RegExp(`^(${unitNames.map((unit) => unit.replace(/ /g, '\\s+')).join('|')})\\b\\.?\\s*`, 'i')
   const unitMatch = remainder.match(unitPattern)
   const sourceUnit = unitMatch?.[1].toLowerCase().replace(/\s+/g, ' ')
-  const name = (unitMatch ? remainder.slice(unitMatch[0].length) : remainder).trim() || raw
+  const name =
+    (unitMatch ? remainder.slice(unitMatch[0].length) : remainder).trim() || raw
 
   if (sourceUnit && sourceUnit in massUnits) {
     const grams = quantity * massUnits[sourceUnit]
@@ -140,7 +163,9 @@ function parseIngredient(rawValue: unknown): Ingredient | null {
     const milliliters = quantity * volumeUnits[sourceUnit]
     return {
       name,
-      quantity: Number((milliliters >= 1000 ? milliliters / 1000 : milliliters).toFixed(2)),
+      quantity: Number(
+        (milliliters >= 1000 ? milliliters / 1000 : milliliters).toFixed(2),
+      ),
       unit: milliliters >= 1000 ? 'l' : 'ml',
       category: categoryFor(name),
     }
@@ -163,22 +188,28 @@ function instructionTexts(value: unknown): string[] {
   return body ? [body] : []
 }
 
-function findRecipe(value: unknown): JsonRecord | null {
+function findStructured(value: unknown, type: string): JsonRecord | null {
   if (Array.isArray(value)) {
     for (const item of value) {
-      const found = findRecipe(item)
+      const found = findStructured(item, type)
       if (found) return found
     }
     return null
   }
   if (!isRecord(value)) return null
-  const types = Array.isArray(value['@type']) ? value['@type'] : [value['@type']]
-  if (types.some((type) => type === 'Recipe')) return value
-  return findRecipe(value['@graph'])
+  const types = Array.isArray(value['@type'])
+    ? value['@type']
+    : [value['@type']]
+  if (types.some((itemType) => itemType === type)) return value
+  return findStructured(value['@graph'], type)
+}
+
+function findRecipe(value: unknown) {
+  return findStructured(value, 'Recipe')
 }
 
 function imageUrl(value: unknown) {
-  if (typeof value === 'string') return value
+  if (typeof value === 'string') return value.replace(/^http:/, 'https:')
   if (Array.isArray(value)) return imageUrl(value[0])
   if (isRecord(value)) return text(value.url ?? value.contentUrl)
   return ''
@@ -186,6 +217,57 @@ function imageUrl(value: unknown) {
 
 function nutritionValue(nutrition: JsonRecord, key: string) {
   return Math.max(0, numberFrom(nutrition[key]))
+}
+
+function splitArticleList(value: string) {
+  return value
+    .split(/[,，、；;|]/)
+    .map((item) => item.replace(/^[✅☑️\s]+/, '').trim())
+    .filter(Boolean)
+}
+
+function parseArticleRecipe(article: JsonRecord): RecipeDraft | null {
+  const title = text(article.headline ?? article.name).replace(
+    /\s+-\s+小红书$/,
+    '',
+  )
+  const description = text(article.description)
+  const ingredientMatch = description.match(
+    /(?:食材|材料)\s*[:：]\s*(.*?)(?=\s*[✅☑️\s]*(?:步骤|做法|方法|小tips?)\s*[:：]|$)/i,
+  )
+  const ingredientNames = ingredientMatch
+    ? splitArticleList(ingredientMatch[1])
+    : []
+  if (!title || !ingredientNames.length) return null
+
+  const stepsMatch = description.match(
+    /(?:步骤|做法|方法)\s*[:：]\s*(.*?)(?=\s*[✅☑️\s]*小tips?\s*[:：]|$)/i,
+  )
+  const stepText = stepsMatch?.[1]?.trim()
+  const instructions = stepText
+    ? splitArticleList(stepText).map((step) =>
+        /图片文字|见图|上述/.test(step)
+          ? 'Review the preparation steps in the imported source images.'
+          : step,
+      )
+    : ['Review the preparation steps in the imported source images.']
+
+  return {
+    title,
+    description:
+      description.length >= 10
+        ? description.slice(0, 1000)
+        : `Imported recipe: ${title}`,
+    imageUrl: imageUrl(article.image),
+    prepMinutes: 0,
+    cookMinutes: 0,
+    baseServings: 4,
+    nutrition: { calories: 0, protein: 0, carbs: 0, fats: 0, fiber: 0 },
+    ingredients: ingredientNames
+      .map((name) => parseIngredient(name))
+      .filter((item): item is Ingredient => Boolean(item)),
+    instructions,
+  }
 }
 
 export function parseRecipeHtml(html: string): RecipeDraft {
@@ -196,7 +278,14 @@ export function parseRecipeHtml(html: string): RecipeDraft {
 
   for (const script of scripts) {
     try {
-      recipe = findRecipe(JSON.parse(script[1]))
+      const data = JSON.parse(script[1])
+      recipe = findRecipe(data)
+      if (!recipe) {
+        const articleRecipe = parseArticleRecipe(
+          findStructured(data, 'Article') ?? {},
+        )
+        if (articleRecipe) return articleRecipe
+      }
       if (recipe) break
     } catch {
       continue
@@ -206,7 +295,9 @@ export function parseRecipeHtml(html: string): RecipeDraft {
   if (!recipe) throw new Error('No structured recipe was found on this page.')
 
   const ingredients = Array.isArray(recipe.recipeIngredient)
-    ? recipe.recipeIngredient.map(parseIngredient).filter((item): item is Ingredient => Boolean(item))
+    ? recipe.recipeIngredient
+        .map(parseIngredient)
+        .filter((item): item is Ingredient => Boolean(item))
     : []
   const instructions = instructionTexts(recipe.recipeInstructions)
   if (!ingredients.length || !instructions.length) {
@@ -219,7 +310,10 @@ export function parseRecipeHtml(html: string): RecipeDraft {
 
   return {
     title: title || 'Imported recipe',
-    description: description.length >= 10 ? description.slice(0, 1000) : `Imported recipe: ${title}`,
+    description:
+      description.length >= 10
+        ? description.slice(0, 1000)
+        : `Imported recipe: ${title}`,
     imageUrl: imageUrl(recipe.image),
     prepMinutes: parseDuration(recipe.prepTime),
     cookMinutes: parseDuration(recipe.cookTime),

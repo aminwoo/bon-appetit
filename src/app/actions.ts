@@ -135,15 +135,13 @@ export async function createRecipe(rawInput: unknown) {
         position,
       })),
     ),
-    db
-      .insert(recipeInstructions)
-      .values(
-        input.instructions.map((body, position) => ({
-          recipeId,
-          body,
-          position,
-        })),
-      ),
+    db.insert(recipeInstructions).values(
+      input.instructions.map((body, position) => ({
+        recipeId,
+        body,
+        position,
+      })),
+    ),
   ])
 
   revalidatePath('/')
@@ -189,15 +187,13 @@ export async function updateRecipe(rawRecipeId: unknown, rawInput: unknown) {
         position,
       })),
     ),
-    db
-      .insert(recipeInstructions)
-      .values(
-        input.instructions.map((body, position) => ({
-          recipeId,
-          body,
-          position,
-        })),
-      ),
+    db.insert(recipeInstructions).values(
+      input.instructions.map((body, position) => ({
+        recipeId,
+        body,
+        position,
+      })),
+    ),
   ])
 
   revalidatePath('/')

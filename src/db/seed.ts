@@ -47,15 +47,13 @@ async function seed() {
         position,
       })),
     )
-    await db
-      .insert(recipeInstructions)
-      .values(
-        recipe.instructions.map((body, position) => ({
-          recipeId,
-          body,
-          position,
-        })),
-      )
+    await db.insert(recipeInstructions).values(
+      recipe.instructions.map((body, position) => ({
+        recipeId,
+        body,
+        position,
+      })),
+    )
   }
 
   const seeded = await db.query.recipes.findMany({

@@ -8,11 +8,17 @@ export async function POST(request: Request) {
   const file = formData.get('file')
 
   if (!(file instanceof File)) {
-    return NextResponse.json({ error: 'No image file was provided.' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'No image file was provided.' },
+      { status: 400 },
+    )
   }
 
   if (!file.type.startsWith('image/')) {
-    return NextResponse.json({ error: 'Only image files can be uploaded.' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'Only image files can be uploaded.' },
+      { status: 400 },
+    )
   }
 
   if (file.size > maxFileSize) {

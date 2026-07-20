@@ -64,9 +64,7 @@ export function WeeklyPlanner({
       authUrl: '/api/ably/token',
       authMethod: 'POST',
     })
-    const channel = realtime.channels.get(
-      `meal-plan:${toDateKey(weekStart)}`,
-    )
+    const channel = realtime.channels.get(`meal-plan:${toDateKey(weekStart)}`)
 
     async function syncPlan() {
       try {
@@ -175,9 +173,7 @@ export function WeeklyPlanner({
     } catch (error) {
       setMeals(previousMeals)
       setPlannerError(
-        error instanceof Error
-          ? error.message
-          : 'Could not remove this meal.',
+        error instanceof Error ? error.message : 'Could not remove this meal.',
       )
     }
   }
@@ -230,7 +226,10 @@ export function WeeklyPlanner({
             </h2>
           </div>
           {plannerError && (
-            <p role="alert" className="text-sm font-semibold text-[var(--accent)]">
+            <p
+              role="alert"
+              className="text-sm font-semibold text-[var(--accent)]"
+            >
               {plannerError}
             </p>
           )}

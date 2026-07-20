@@ -32,7 +32,10 @@ export function AppHeader() {
           </span>
         </Link>
 
-        <nav className="flex items-center gap-1" aria-label={t('mainNavigation')}>
+        <nav
+          className="flex items-center gap-1"
+          aria-label={t('mainNavigation')}
+        >
           {links.map(({ href, key, icon: Icon }) => {
             const active =
               href === '/'

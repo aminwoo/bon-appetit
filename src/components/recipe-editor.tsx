@@ -544,7 +544,11 @@ export function RecipeEditor({
             onClick={submit}
           >
             {isPending ? <Loader2 className="animate-spin" /> : <Save />}{' '}
-            {isPending ? t('saving') : isEditing ? t('saveChanges') : t('createRecipe')}
+            {isPending
+              ? t('saving')
+              : isEditing
+                ? t('saveChanges')
+                : t('createRecipe')}
           </Button>
         </div>
       </div>

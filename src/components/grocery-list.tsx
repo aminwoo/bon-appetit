@@ -109,7 +109,9 @@ export function GroceryList({ meals }: { meals: PlannedMeal[] }) {
               </div>
               <div className="border-l-2 border-[var(--ink)] pl-5">
                 <div className="flex items-end justify-between">
-                  <span className="text-sm font-bold">{t('shoppingProgress')}</span>
+                  <span className="text-sm font-bold">
+                    {t('shoppingProgress')}
+                  </span>
                   <span className="font-display text-3xl font-semibold">
                     {progress}%
                   </span>
@@ -175,9 +177,7 @@ export function GroceryList({ meals }: { meals: PlannedMeal[] }) {
               {t('thisWeeksList')}
             </h2>
           </div>
-          <p className="text-sm text-[var(--muted)]">
-            {t('metricQuantities')}
-          </p>
+          <p className="text-sm text-[var(--muted)]">{t('metricQuantities')}</p>
         </div>
 
         {items.length === 0 ? (
@@ -208,7 +208,14 @@ export function GroceryList({ meals }: { meals: PlannedMeal[] }) {
                       className="flex items-center gap-2 text-sm font-bold uppercase"
                     >
                       <Icon className="size-4 text-[var(--accent)]" />{' '}
-                      {t(category.toLowerCase() as 'produce' | 'meat' | 'dairy' | 'pantry' | 'spices')}
+                      {t(
+                        category.toLowerCase() as
+                          | 'produce'
+                          | 'meat'
+                          | 'dairy'
+                          | 'pantry'
+                          | 'spices',
+                      )}
                     </h3>
                     <span className="text-xs text-[var(--muted)]">
                       {categoryItems.length}

@@ -171,7 +171,9 @@ export function RecipeDetail({
                 {t('ingredients')}
               </h2>
             </div>
-            <span className="text-sm text-[var(--muted)]">{t('metricOnly')}</span>
+            <span className="text-sm text-[var(--muted)]">
+              {t('metricOnly')}
+            </span>
           </div>
           <ul className="divide-y divide-[var(--line)]">
             {ingredients.map((ingredient) => (

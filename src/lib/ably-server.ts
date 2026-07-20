@@ -21,10 +21,12 @@ export async function publishPlanChange(date: string, event: string) {
 
   const weekStart = toDateKey(getMonday(new Date(`${date}T00:00:00.000Z`)))
   try {
-    await client.channels.get(`meal-plan:${weekStart}`).publish('plan-changed', {
-      event,
-      date,
-    })
+    await client.channels
+      .get(`meal-plan:${weekStart}`)
+      .publish('plan-changed', {
+        event,
+        date,
+      })
   } catch (error) {
     console.error('Ably plan event failed', error)
   }
