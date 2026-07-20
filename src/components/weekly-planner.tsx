@@ -2,8 +2,9 @@
 
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight, Minus, Plus, Users, X } from 'lucide-react'
-import { useState } from 'react'
-import { assignMeal, removeMeal } from '@/app/actions'
+import { Realtime } from 'ably'
+import { startTransition, useEffect, useState } from 'react'
+import { assignMeal, getWeeklyPlan, removeMeal } from '@/app/actions'
 import { Button } from '@/components/ui/button'
 import { getWeekDates, toDateKey } from '@/lib/dates'
 import { recipeImages } from '@/lib/demo-data'
@@ -55,6 +56,33 @@ export function WeeklyPlanner({
     Dinner: t('dinner'),
     Snack: t('snack'),
   }
+
+  useEffect(() => {
+    if (!databaseReady) return
+
+    const realtime = new Realtime({
+      authUrl: '/api/ably/token',
+      authMethod: 'POST',
+    })
+    const channel = realtime.channels.get(
+      `meal-plan:${toDateKey(weekStart)}`,
+    )
+
+    async function syncPlan() {
+      try {
+        const latestMeals = await getWeeklyPlan(toDateKey(weekStart))
+        startTransition(() => setMeals(latestMeals))
+      } catch (error) {
+        console.error('Could not sync realtime meal plan', error)
+      }
+    }
+
+    void channel.subscribe('plan-changed', syncPlan)
+    return () => {
+      channel.unsubscribe('plan-changed', syncPlan)
+      void realtime.close()
+    }
+  }, [databaseReady, weekStart])
 
   function moveWeek(offset: number) {
     const next = new Date(weekStart)

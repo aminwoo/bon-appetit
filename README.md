@@ -30,12 +30,18 @@ Create a Neon project and copy its pooled connection string into `.env.local`:
 ```dotenv
 DATABASE_URL=postgresql://user:password@host/database?sslmode=require
 BLOB_READ_WRITE_TOKEN=vercel_blob_rw_xxxxxxxxxxxxxxxxxxxx
+ABLY_API_KEY=xxxxx.xxxxx:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 Create a Blob store in the Vercel project and add its read/write token as
 `BLOB_READ_WRITE_TOKEN`. Recipe photos can then be uploaded from the recipe
 editor; uploaded images are stored in Vercel Blob and their public URLs are
 saved with the recipe in Neon. Images must be 10 MB or smaller.
+
+Create an Ably app and add its server-side API key as `ABLY_API_KEY`. The plan
+page publishes successful Neon meal changes to a week-scoped Ably channel, so
+other open plan pages update without a refresh. Keep this key private; the
+browser receives short-lived tokens through `/api/ably/token`.
 
 ## Commands
 
@@ -64,7 +70,8 @@ All ingredient quantities are restricted to `g`, `kg`, `ml`, or `l`. Grocery agg
 1. Import this repository into Vercel.
 2. Add `DATABASE_URL` in Project Settings > Environment Variables.
 3. Create a Blob store and add its `BLOB_READ_WRITE_TOKEN` in Project Settings > Environment Variables.
-4. Run `npm run db:push` from a trusted local or CI environment.
-5. Deploy. Vercel detects the Next.js build automatically.
+4. Create an Ably app and add `ABLY_API_KEY` in Project Settings > Environment Variables.
+5. Run `npm run db:push` from a trusted local or CI environment.
+6. Deploy. Vercel detects the Next.js build automatically.
 
 The Neon HTTP driver opens no persistent TCP connections, making it suitable for Vercel serverless functions.

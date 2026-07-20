@@ -12,6 +12,7 @@ import {
   recipes,
 } from '@/db/schema'
 import { addDays } from '@/lib/dates'
+import { publishPlanChange } from '@/lib/ably-server'
 import { aggregateIngredients, scaleIngredient } from '@/lib/units'
 import {
   ingredientCategories,
@@ -231,6 +232,7 @@ export async function assignMeal(rawInput: unknown) {
       set: { recipeId: input.recipeId, servings: input.servings },
     })
   revalidatePath('/')
+  await publishPlanChange(input.date, 'meal-updated')
   const savedMeal = await db.query.plannedMeals.findFirst({
     where: and(
       eq(plannedMeals.date, input.date),
@@ -243,7 +245,13 @@ export async function assignMeal(rawInput: unknown) {
 
 export async function removeMeal(rawMealId: unknown) {
   const mealId = z.string().uuid().parse(rawMealId)
-  await getDb().delete(plannedMeals).where(eq(plannedMeals.id, mealId))
+  const db = getDb()
+  const meal = await db.query.plannedMeals.findFirst({
+    where: eq(plannedMeals.id, mealId),
+    columns: { date: true },
+  })
+  await db.delete(plannedMeals).where(eq(plannedMeals.id, mealId))
+  if (meal) await publishPlanChange(meal.date, 'meal-removed')
   revalidatePath('/')
 }
 
