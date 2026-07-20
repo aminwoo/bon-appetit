@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import {
   ArrowLeft,
+  Download,
   GripVertical,
   Loader2,
   Plus,
@@ -58,9 +59,42 @@ export function RecipeEditor({
   })
   const [isPending, startTransition] = useTransition()
   const [isUploading, setIsUploading] = useState(false)
+  const [isImporting, setIsImporting] = useState(false)
+  const [importUrl, setImportUrl] = useState('')
   const [error, setError] = useState<string | null>(null)
   const { t } = useLanguage()
   const isEditing = Boolean(recipe && !duplicate)
+
+  async function importRecipe() {
+    setError(null)
+    setIsImporting(true)
+
+    try {
+      const response = await fetch('/api/recipes/import', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ url: importUrl }),
+      })
+      const result = (await response.json()) as {
+        recipe?: RecipeDraft
+        error?: string
+      }
+
+      if (!response.ok || !result.recipe) {
+        throw new Error(result.error ?? 'Could not import this recipe.')
+      }
+
+      setDraft(result.recipe)
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : 'Could not import this recipe.',
+      )
+    } finally {
+      setIsImporting(false)
+    }
+  }
 
   async function uploadImage(file: File) {
     setError(null)
@@ -164,6 +198,41 @@ export function RecipeEditor({
       </section>
 
       <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+        {!isEditing && (
+          <section className="mb-10 border-b border-[var(--line)] pb-8">
+            <p className="text-xs font-bold uppercase text-[var(--accent)]">
+              {t('quickImport')}
+            </p>
+            <label className="mt-3 block">
+              <span className="sr-only">{t('recipeLink')}</span>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <input
+                  type="url"
+                  className={fieldClass}
+                  placeholder="https://example.com/recipe"
+                  value={importUrl}
+                  onChange={(event) => setImportUrl(event.target.value)}
+                />
+                <Button
+                  variant="outline"
+                  disabled={isImporting || !importUrl.trim()}
+                  onClick={() => void importRecipe()}
+                  className="shrink-0"
+                >
+                  {isImporting ? (
+                    <Loader2 className="animate-spin" />
+                  ) : (
+                    <Download />
+                  )}
+                  {isImporting ? t('importingRecipe') : t('importRecipe')}
+                </Button>
+              </div>
+            </label>
+            <p className="mt-2 text-xs leading-5 text-[var(--muted)]">
+              {t('importHint')}
+            </p>
+          </section>
+        )}
         <section className="grid gap-5 sm:grid-cols-2">
           <label className="sm:col-span-2">
             <span className="mb-2 block text-xs font-bold uppercase text-[var(--muted)]">

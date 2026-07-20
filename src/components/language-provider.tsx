@@ -113,6 +113,11 @@ type TranslationKey =
   | 'fats'
   | 'fiber'
   | 'inOrder'
+  | 'quickImport'
+  | 'recipeLink'
+  | 'importRecipe'
+  | 'importingRecipe'
+  | 'importHint'
 
 const translations: Record<Language, Record<TranslationKey, string>> = {
   en: {
@@ -217,6 +222,11 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     fats: 'Fats',
     fiber: 'Fiber',
     inOrder: 'In order',
+    quickImport: 'Quick import',
+    recipeLink: 'Recipe link',
+    importRecipe: 'Import recipe',
+    importingRecipe: 'Importing…',
+    importHint: 'Paste a recipe page link. Imported quantities are metric estimates, so review them before saving.',
   },
   zh: {
     plan: '计划',
@@ -320,6 +330,11 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     fats: '脂肪',
     fiber: '纤维',
     inOrder: '按顺序',
+    quickImport: '快速导入',
+    recipeLink: '食谱链接',
+    importRecipe: '导入食谱',
+    importingRecipe: '导入中…',
+    importHint: '粘贴食谱页面链接。导入的数量为公制估算值，请在保存前检查。',
   },
 }
 

@@ -8,11 +8,17 @@ The checked-in demo data makes every route usable without a database. The Server
 
 - Open `/recipes` to browse the complete recipe library.
 - Add a recipe with dynamic metric ingredients, ordered method steps, timings, servings, and nutrition per serving.
+- Quickly import a recipe from a public recipe-page URL, then review and edit the populated draft before saving.
 - Use **Customize** on a built-in recipe to create an editable personal copy.
 - Custom Neon recipes have **Edit recipe** and confirmed **Delete** controls on their detail page.
 - New and updated recipes are immediately available in the weekly planner recipe selector.
 
 Creating, editing, and deleting records requires `DATABASE_URL`. The built-in recipes remain read-only source material so they are always available as examples.
+
+Link imports use Schema.org `Recipe` data published by the source website.
+Common US and imperial quantities are converted to metric estimates. Ingredients
+without a standard mass or volume unit are marked for review and are never saved
+until the user submits the populated editor.
 
 ## Local setup
 
