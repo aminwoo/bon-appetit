@@ -30,7 +30,10 @@ const ingredientSchema = z.object({
 const recipeSchema = z.object({
   title: z.string().trim().min(2).max(160),
   description: z.string().trim().min(10).max(1000),
-  imageUrl: z.union([z.string().url().max(2048), z.literal('')]),
+  imageUrl: z
+    .union([z.string().url().max(2048), z.literal('')])
+    .optional()
+    .default(''),
   prepMinutes: z.number().int().min(0).max(1440),
   cookMinutes: z.number().int().min(0).max(1440),
   baseServings: z.number().int().min(1).max(100),
