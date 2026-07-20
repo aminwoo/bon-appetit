@@ -1,26 +1,77 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --paper: #f4f2eb;
+  --paper-deep: #eae7dc;
+  --ink: #19271f;
+  --muted: #657068;
+  --leaf: #315f49;
+  --sage: #dbe6dc;
+  --accent: #de6848;
+  --gold: #d8a93f;
+  --line: #d8d8ce;
+  --background: var(--paper);
+  --foreground: var(--ink);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-manrope);
+  --font-display: var(--font-newsreader);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-manrope), sans-serif;
+  letter-spacing: 0;
+}
+
+button,
+select,
+input {
+  font: inherit;
+}
+
+::selection {
+  background: #f1b4a1;
+  color: var(--ink);
+}
+
+.font-display {
+  font-family: var(--font-newsreader), serif;
+}
+
+.paper-grid {
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: -1px -1px;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rise-in {
+  animation: rise-in 500ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise-in {
+    animation: none;
+  }
 }

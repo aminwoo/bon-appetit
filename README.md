@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mise
 
-## Getting Started
+A responsive meal planning app built with Next.js 16, React Server Components, Server Actions, Neon Postgres, Drizzle ORM, Tailwind CSS, and shadcn-style UI primitives.
 
-First, run the development server:
+The checked-in demo data makes every route usable without a database. The Server Actions in `src/app/actions.ts` are ready for persistent Neon-backed recipes, meal slots, and grocery checks once `DATABASE_URL` is configured.
+
+## Recipe management
+
+- Open `/recipes` to browse the complete recipe library.
+- Add a recipe with dynamic metric ingredients, ordered method steps, timings, servings, and nutrition per serving.
+- Use **Customize** on a built-in recipe to create an editable personal copy.
+- Custom Neon recipes have **Edit recipe** and confirmed **Delete** controls on their detail page.
+- New and updated recipes are immediately available in the weekly planner recipe selector.
+
+Creating, editing, and deleting records requires `DATABASE_URL`. The built-in recipes remain read-only source material so they are always available as examples.
+
+## Local setup
 
 ```bash
+npm install
+cp .env.example .env.local
+npm run db:push
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Create a Neon project and copy its pooled connection string into `.env.local`:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```dotenv
+DATABASE_URL=postgresql://user:password@host/database?sslmode=require
+```
 
-## Learn More
+## Commands
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run dev          # Start the Turbopack development server
+npm run build        # Create a production build
+npm run lint         # Run ESLint
+npm test             # Run domain helper tests
+npm run db:generate  # Generate SQL migrations in drizzle/
+npm run db:push      # Apply the schema directly to Neon
+npm run db:seed      # Seed the five built-in recipes into Neon
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Data model
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `recipes`: recipe metadata and nutrition per serving
+- `recipe_ingredients`: metric quantities, normalized names, and aisle categories
+- `recipe_instructions`: ordered cooking steps
+- `planned_meals`: one recipe and serving target per date/meal slot
+- `grocery_item_checks`: per-week shopping completion state
 
-## Deploy on Vercel
+All ingredient quantities are restricted to `g`, `kg`, `ml`, or `l`. Grocery aggregation converts mass to grams and volume to milliliters before combining matching normalized names, then displays totals in the most readable compatible metric unit.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Vercel deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Import this repository into Vercel.
+2. Add `DATABASE_URL` in Project Settings > Environment Variables.
+3. Run `npm run db:push` from a trusted local or CI environment.
+4. Deploy. Vercel detects the Next.js build automatically.
+
+The Neon HTTP driver opens no persistent TCP connections, making it suitable for Vercel serverless functions.
