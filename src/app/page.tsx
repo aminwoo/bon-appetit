@@ -15,6 +15,7 @@ export default async function Home() {
       initialWeekStart={weekStart}
       initialMeals={meals}
       recipes={recipes}
+      databaseReady={databaseReady}
     />
   )
 }

@@ -231,6 +231,14 @@ export async function assignMeal(rawInput: unknown) {
       set: { recipeId: input.recipeId, servings: input.servings },
     })
   revalidatePath('/')
+  const savedMeal = await db.query.plannedMeals.findFirst({
+    where: and(
+      eq(plannedMeals.date, input.date),
+      eq(plannedMeals.slot, input.slot),
+    ),
+    columns: { id: true },
+  })
+  return { id: savedMeal?.id }
 }
 
 export async function removeMeal(rawMealId: unknown) {

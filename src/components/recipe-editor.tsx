@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { useLanguage } from '@/components/language-provider'
 import { createRecipe, updateRecipe } from '@/app/actions'
 import { Button } from '@/components/ui/button'
 import {
@@ -58,6 +59,7 @@ export function RecipeEditor({
   const [isPending, startTransition] = useTransition()
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { t } = useLanguage()
   const isEditing = Boolean(recipe && !duplicate)
 
   async function uploadImage(file: File) {
@@ -142,22 +144,21 @@ export function RecipeEditor({
             className="mb-7 border-white/30 bg-transparent text-white hover:bg-white hover:text-[var(--ink)]"
           >
             <Link href={recipe ? `/recipes/${recipe.id}` : '/recipes'}>
-              <ArrowLeft /> Cancel
+              <ArrowLeft /> {t('cancelEdit')}
             </Link>
           </Button>
           <p className="text-xs font-bold uppercase text-[#a9c6b5]">
             {isEditing
-              ? 'Edit recipe'
+              ? t('editRecipe')
               : duplicate
-                ? 'Make it yours'
-                : 'New recipe'}
+                ? t('makeItYours')
+                : t('newRecipe')}
           </p>
           <h1 className="font-display mt-2 text-5xl leading-none font-semibold sm:text-7xl">
-            {isEditing ? 'Refine the details.' : 'Add something delicious.'}
+            {isEditing ? t('refineDetails') : t('addSomething')}
           </h1>
           <p className="mt-4 max-w-xl text-sm leading-6 text-white/65">
-            Quantities stay strictly metric. Nutrition values are recorded per
-            serving.
+            {t('nutritionHint')}
           </p>
         </div>
       </section>
@@ -166,7 +167,7 @@ export function RecipeEditor({
         <section className="grid gap-5 sm:grid-cols-2">
           <label className="sm:col-span-2">
             <span className="mb-2 block text-xs font-bold uppercase text-[var(--muted)]">
-              Title
+              {t('title')}
             </span>
             <input
               className={fieldClass}
@@ -179,7 +180,7 @@ export function RecipeEditor({
           </label>
           <label className="sm:col-span-2">
             <span className="mb-2 block text-xs font-bold uppercase text-[var(--muted)]">
-              Recipe photo URL
+              {t('recipePhotoUrl')}
             </span>
             <input
               type="url"
@@ -208,6 +209,7 @@ export function RecipeEditor({
                   event.target.value = ''
                 }}
               />
+              {isUploading ? t('uploading') : t('uploadImage')}
             </label>
             <span className="mt-2 block text-xs text-[var(--muted)]">
               Upload an image up to 10 MB, or paste a public image URL.
@@ -235,13 +237,13 @@ export function RecipeEditor({
             />
           </label>
           {[
-            ['Prep time', 'prepMinutes'],
-            ['Cook time', 'cookMinutes'],
-            ['Base servings', 'baseServings'],
+            [t('prepTime'), 'prepMinutes'],
+            [t('cookTime'), 'cookMinutes'],
+            [t('baseServings'), 'baseServings'],
           ].map(([label, key]) => (
             <label key={key}>
               <span className="mb-2 block text-xs font-bold uppercase text-[var(--muted)]">
-                {label} {key !== 'baseServings' && '(min)'}
+                {label} {key !== 'baseServings' && t('minutes')}
               </span>
               <input
                 type="number"
@@ -259,19 +261,20 @@ export function RecipeEditor({
         <section className="mt-12">
           <div className="mb-5 border-b border-[var(--ink)] pb-4">
             <p className="text-xs font-bold uppercase text-[var(--accent)]">
-              Per serving
+              {t('perServingHeading')}
             </p>
-            <h2 className="font-display text-4xl font-semibold">Nutrition</h2>
+            <h2 className="font-display text-4xl font-semibold">
+              {t('nutrition')}
+            </h2>
           </div>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
             {(['calories', 'protein', 'carbs', 'fats', 'fiber'] as const).map(
               (key) => (
                 <label key={key}>
                   <span className="mb-2 block text-xs font-bold capitalize text-[var(--muted)]">
-                    {key} {key !== 'calories' && '(g)'}
+                    {t(key)} {key !== 'calories' && '(g)'}
                   </span>
                   <input
-                    type="number"
                     min="0"
                     step={key === 'calories' ? 1 : 0.1}
                     className={fieldClass}
@@ -296,10 +299,10 @@ export function RecipeEditor({
           <div className="mb-5 flex items-end justify-between border-b border-[var(--ink)] pb-4">
             <div>
               <p className="text-xs font-bold uppercase text-[var(--accent)]">
-                Metric only
+                {t('metricOnly')}
               </p>
               <h2 className="font-display text-4xl font-semibold">
-                Ingredients
+                {t('ingredients')}
               </h2>
             </div>
             <Button
@@ -315,7 +318,7 @@ export function RecipeEditor({
                 })
               }
             >
-              <Plus /> Add
+              <Plus /> {t('add')}
             </Button>
           </div>
           <div className="space-y-3">
@@ -387,7 +390,7 @@ export function RecipeEditor({
                       ),
                     })
                   }
-                  title="Remove ingredient"
+                  title={t('removeIngredient')}
                 >
                   <Trash2 />
                 </Button>
@@ -400,9 +403,11 @@ export function RecipeEditor({
           <div className="mb-5 flex items-end justify-between border-b border-[var(--ink)] pb-4">
             <div>
               <p className="text-xs font-bold uppercase text-[var(--accent)]">
-                In order
+                {t('inOrder')}
               </p>
-              <h2 className="font-display text-4xl font-semibold">Method</h2>
+              <h2 className="font-display text-4xl font-semibold">
+                {t('method')}
+              </h2>
             </div>
             <Button
               variant="outline"
@@ -414,7 +419,7 @@ export function RecipeEditor({
                 })
               }
             >
-              <Plus /> Add step
+              <Plus /> {t('addStep')}
             </Button>
           </div>
           <div className="space-y-4">
@@ -448,7 +453,7 @@ export function RecipeEditor({
                       ),
                     })
                   }
-                  title="Remove step"
+                  title={t('removeStep')}
                 >
                   <Trash2 />
                 </Button>
@@ -470,11 +475,7 @@ export function RecipeEditor({
             onClick={submit}
           >
             {isPending ? <Loader2 className="animate-spin" /> : <Save />}{' '}
-            {isPending
-              ? 'Saving…'
-              : isEditing
-                ? 'Save changes'
-                : 'Create recipe'}
+            {isPending ? t('saving') : isEditing ? t('saveChanges') : t('createRecipe')}
           </Button>
         </div>
       </div>

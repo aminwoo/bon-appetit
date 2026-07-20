@@ -3,10 +3,12 @@
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight, Minus, Plus, Users, X } from 'lucide-react'
 import { useState } from 'react'
+import { assignMeal, removeMeal } from '@/app/actions'
 import { Button } from '@/components/ui/button'
 import { getWeekDates, toDateKey } from '@/lib/dates'
 import { recipeImages } from '@/lib/demo-data'
 import { cn } from '@/lib/utils'
+import { useLanguage } from '@/components/language-provider'
 import {
   mealSlots,
   type MealSlot,
@@ -18,6 +20,7 @@ type WeeklyPlannerProps = {
   initialWeekStart: string
   initialMeals: PlannedMeal[]
   recipes: Recipe[]
+  databaseReady: boolean
 }
 
 const dayFormatter = new Intl.DateTimeFormat('en', { weekday: 'short' })
@@ -35,13 +38,23 @@ export function WeeklyPlanner({
   initialWeekStart,
   initialMeals,
   recipes,
+  databaseReady,
 }: WeeklyPlannerProps) {
   const [weekStart, setWeekStart] = useState(
     () => new Date(`${initialWeekStart}T00:00:00Z`),
   )
   const [meals, setMeals] = useState(initialMeals)
   const [editingSlot, setEditingSlot] = useState<string | null>(null)
+  const [plannerError, setPlannerError] = useState<string | null>(null)
+  const { t } = useLanguage()
   const dates = getWeekDates(weekStart)
+
+  const slotLabels = {
+    Breakfast: t('breakfast'),
+    Lunch: t('lunch'),
+    Dinner: t('dinner'),
+    Snack: t('snack'),
+  }
 
   function moveWeek(offset: number) {
     const next = new Date(weekStart)
@@ -50,9 +63,10 @@ export function WeeklyPlanner({
     setEditingSlot(null)
   }
 
-  function assignRecipe(date: string, slot: MealSlot, recipeId: string) {
+  async function assignRecipe(date: string, slot: MealSlot, recipeId: string) {
     const recipe = recipes.find((item) => item.id === recipeId)
     if (!recipe) return
+    const previousMeals = meals
     setMeals((current) => [
       ...current.filter((meal) => !(meal.date === date && meal.slot === slot)),
       {
@@ -64,19 +78,80 @@ export function WeeklyPlanner({
       },
     ])
     setEditingSlot(null)
+    setPlannerError(null)
+
+    if (!databaseReady) return
+
+    try {
+      const result = await assignMeal({
+        date,
+        slot,
+        recipeId,
+        servings: recipe.baseServings,
+      })
+      if (result.id) {
+        setMeals((current) =>
+          current.map((meal) =>
+            meal.id === `local-${date}-${slot}`
+              ? { ...meal, id: result.id as string }
+              : meal,
+          ),
+        )
+      }
+    } catch (error) {
+      setMeals(previousMeals)
+      setPlannerError(
+        error instanceof Error
+          ? error.message
+          : 'Could not save this meal assignment.',
+      )
+    }
   }
 
-  function changeServings(mealId: string, amount: number) {
+  async function changeServings(mealId: string, amount: number) {
+    const meal = meals.find((item) => item.id === mealId)
+    if (!meal) return
+    const previousMeals = meals
+    const servings = Math.max(1, Math.min(20, meal.servings + amount))
     setMeals((current) =>
-      current.map((meal) =>
-        meal.id === mealId
-          ? {
-              ...meal,
-              servings: Math.max(1, Math.min(20, meal.servings + amount)),
-            }
-          : meal,
+      current.map((item) =>
+        item.id === mealId ? { ...item, servings } : item,
       ),
     )
+    if (!databaseReady) return
+
+    try {
+      await assignMeal({
+        date: meal.date,
+        slot: meal.slot,
+        recipeId: meal.recipe.id,
+        servings,
+      })
+    } catch (error) {
+      setMeals(previousMeals)
+      setPlannerError(
+        error instanceof Error
+          ? error.message
+          : 'Could not save the serving change.',
+      )
+    }
+  }
+
+  async function removePlannedMeal(meal: PlannedMeal) {
+    const previousMeals = meals
+    setMeals((current) => current.filter((item) => item.id !== meal.id))
+    if (!databaseReady) return
+
+    try {
+      await removeMeal(meal.id)
+    } catch (error) {
+      setMeals(previousMeals)
+      setPlannerError(
+        error instanceof Error
+          ? error.message
+          : 'Could not remove this meal.',
+      )
+    }
   }
 
   const visibleMeals = meals.filter((meal) =>
@@ -93,24 +168,23 @@ export function WeeklyPlanner({
         <div className="mx-auto grid max-w-[1500px] gap-8 px-4 py-9 sm:px-6 lg:grid-cols-[1fr_auto] lg:items-end lg:px-8 lg:py-12">
           <div className="rise-in">
             <p className="mb-2 text-xs font-bold uppercase text-[#a9c6b5]">
-              Your weekly table
+              {t('yourWeeklyTable')}
             </p>
             <h1 className="font-display max-w-3xl text-4xl leading-[0.98] font-medium sm:text-6xl">
-              Make room for good food.
+              {t('makeRoomForGoodFood')}
             </h1>
             <p className="mt-4 max-w-xl text-sm leading-6 text-[#c5cec9] sm:text-base">
-              Shape the week, balance each day, then turn the whole plan into
-              one clean shopping list.
+              {t('shapeTheWeek')}
             </p>
           </div>
           <div className="flex gap-3 rise-in [animation-delay:120ms]">
             <div className="min-w-28 border-l border-white/20 pl-4">
               <p className="text-2xl font-bold">{visibleMeals.length}</p>
-              <p className="text-xs text-[#aebbb4]">meals planned</p>
+              <p className="text-xs text-[#aebbb4]">{t('mealsPlanned')}</p>
             </div>
             <div className="min-w-28 border-l border-white/20 pl-4">
               <p className="text-2xl font-bold">{Math.round(proteinTotal)} g</p>
-              <p className="text-xs text-[#aebbb4]">protein total</p>
+              <p className="text-xs text-[#aebbb4]">{t('proteinTotal')}</p>
             </div>
           </div>
         </div>
@@ -120,19 +194,24 @@ export function WeeklyPlanner({
         <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs font-bold uppercase text-[var(--accent)]">
-              Meal plan
+              {t('mealPlan')}
             </p>
             <h2 className="font-display mt-1 text-3xl font-semibold sm:text-4xl">
               {rangeFormatter.format(dates[0])} –{' '}
               {rangeFormatter.format(dates[6])}
             </h2>
           </div>
+          {plannerError && (
+            <p role="alert" className="text-sm font-semibold text-[var(--accent)]">
+              {plannerError}
+            </p>
+          )}
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="icon"
               onClick={() => moveWeek(-1)}
-              title="Previous week"
+              title={t('previousWeek')}
             >
               <ChevronLeft />
             </Button>
@@ -142,13 +221,13 @@ export function WeeklyPlanner({
                 setWeekStart(new Date(`${initialWeekStart}T00:00:00Z`))
               }
             >
-              This week
+              {t('thisWeek')}
             </Button>
             <Button
               variant="outline"
               size="icon"
               onClick={() => moveWeek(1)}
-              title="Next week"
+              title={t('nextWeek')}
             >
               <ChevronRight />
             </Button>
@@ -230,7 +309,7 @@ export function WeeklyPlanner({
                         className="h-44 border-b border-[var(--line)] p-2.5 last:border-b-0"
                       >
                         <p className="mb-2 text-[10px] font-bold uppercase text-[var(--muted)]">
-                          {slot}
+                          {slotLabels[slot]}
                         </p>
                         {meal ? (
                           <div className="group relative flex h-[128px] flex-col overflow-hidden rounded-md bg-[var(--paper-deep)]">
@@ -249,12 +328,8 @@ export function WeeklyPlanner({
                             </Link>
                             <button
                               className="absolute top-1.5 right-1.5 grid size-6 place-items-center rounded-md bg-white/90 opacity-0 shadow-sm transition-opacity group-hover:opacity-100 focus:opacity-100"
-                              onClick={() =>
-                                setMeals((current) =>
-                                  current.filter((item) => item.id !== meal.id),
-                                )
-                              }
-                              title="Remove meal"
+                              onClick={() => void removePlannedMeal(meal)}
+                              title={t('removeMeal')}
                             >
                               <X className="size-3.5" />
                             </button>
@@ -271,14 +346,14 @@ export function WeeklyPlanner({
                                 <button
                                   onClick={() => changeServings(meal.id, -1)}
                                   className="grid size-6 place-items-center"
-                                  title="Decrease servings"
+                                  title={t('decreaseServings')}
                                 >
                                   <Minus className="size-3" />
                                 </button>
                                 <button
                                   onClick={() => changeServings(meal.id, 1)}
                                   className="grid size-6 place-items-center"
-                                  title="Increase servings"
+                                  title={t('increaseServings')}
                                 >
                                   <Plus className="size-3" />
                                 </button>
@@ -291,7 +366,7 @@ export function WeeklyPlanner({
                               className="text-[10px] font-bold uppercase"
                               htmlFor={slotKey}
                             >
-                              Choose recipe
+                              {t('chooseRecipe')}
                             </label>
                             <select
                               id={slotKey}
@@ -303,7 +378,7 @@ export function WeeklyPlanner({
                               className="h-9 min-w-0 rounded-md border border-[var(--line)] bg-white px-2 text-xs outline-none focus:ring-2 focus:ring-[var(--leaf)]"
                             >
                               <option value="" disabled>
-                                Select…
+                                {t('selectRecipe')}
                               </option>
                               {recipes.map((recipe) => (
                                 <option key={recipe.id} value={recipe.id}>
@@ -315,14 +390,14 @@ export function WeeklyPlanner({
                               className="text-[10px] font-bold text-[var(--muted)]"
                               onClick={() => setEditingSlot(null)}
                             >
-                              Cancel
+                              {t('cancel')}
                             </button>
                           </div>
                         ) : (
                           <button
                             onClick={() => setEditingSlot(slotKey)}
                             className="grid h-[128px] w-full place-items-center rounded-md border border-dashed border-[var(--line)] text-[var(--muted)] transition-colors hover:border-[var(--leaf)] hover:bg-[var(--sage)] hover:text-[var(--leaf)]"
-                            title={`Add ${slot.toLowerCase()}`}
+                            title={`${t('addMeal')} ${slotLabels[slot].toLowerCase()}`}
                           >
                             <Plus className="size-5" />
                           </button>
@@ -336,7 +411,7 @@ export function WeeklyPlanner({
           </div>
         </div>
         <p className="mt-2 text-xs text-[var(--muted)] lg:hidden">
-          Swipe sideways to see the full week.
+          {t('swipeWeek')}
         </p>
       </section>
     </main>

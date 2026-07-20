@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { RecipeDeleteButton } from '@/components/recipe-delete-button'
 import { scaleIngredient, scaleNutrition } from '@/lib/units'
 import type { Recipe } from '@/lib/types'
+import { useLanguage } from '@/components/language-provider'
 
 type RecipeDetailProps = {
   recipe: Recipe
@@ -33,6 +34,7 @@ export function RecipeDetail({
   isCustom = false,
 }: RecipeDetailProps) {
   const [servings, setServings] = useState(recipe.baseServings)
+  const { t } = useLanguage()
   const ingredients = recipe.ingredients.map((ingredient) =>
     scaleIngredient(ingredient, servings, recipe.baseServings),
   )
@@ -60,7 +62,7 @@ export function RecipeDetail({
               className="w-fit border-white/30 bg-black/10 text-white hover:bg-white hover:text-[var(--ink)]"
             >
               <Link href="/recipes">
-                <ArrowLeft /> All recipes
+                <ArrowLeft /> {t('allRecipes')}
               </Link>
             </Button>
             <div className="flex flex-wrap gap-2">
@@ -71,7 +73,7 @@ export function RecipeDetail({
               >
                 <Link href={`/recipes/${recipe.id}/edit`}>
                   {isCustom ? <Pencil /> : <Copy />}{' '}
-                  {isCustom ? 'Edit recipe' : 'Customize'}
+                  {isCustom ? t('editRecipe') : t('customize')}
                 </Link>
               </Button>
               {isCustom && <RecipeDeleteButton recipeId={recipe.id} />}
@@ -79,7 +81,7 @@ export function RecipeDetail({
           </div>
           <div className="max-w-3xl rise-in">
             <p className="mb-3 text-xs font-bold uppercase text-[#c5e0d0]">
-              Weeknight favourite
+              {t('weeknightFavourite')}
             </p>
             <h1 className="font-display text-5xl leading-[0.95] font-medium sm:text-7xl lg:text-8xl">
               {recipe.title}
@@ -90,14 +92,15 @@ export function RecipeDetail({
             <div className="mt-7 flex flex-wrap gap-5 text-sm font-semibold">
               <span className="flex items-center gap-2">
                 <Clock3 className="size-4 text-[#d8b45a]" />{' '}
-                {recipe.prepMinutes + recipe.cookMinutes} min total
+                {recipe.prepMinutes + recipe.cookMinutes} {t('prepMinutes')}{' '}
+                {t('total')}
               </span>
               <span className="flex items-center gap-2">
                 <Flame className="size-4 text-[#ef8669]" />{' '}
-                {recipe.nutrition.calories} kcal / serving
+                {recipe.nutrition.calories} kcal / {t('perServing')}
               </span>
               <span className="flex items-center gap-2">
-                <Users className="size-4 text-[#a9c6b5]" /> Base recipe for{' '}
+                <Users className="size-4 text-[#a9c6b5]" /> {t('baseServings')}{' '}
                 {recipe.baseServings}
               </span>
             </div>
@@ -112,7 +115,7 @@ export function RecipeDetail({
               Scale the table
             </p>
             <h2 className="font-display mt-1 text-3xl font-semibold">
-              Cooking for how many?
+              {t('cookingFor')}
             </h2>
           </div>
           <div className="grid gap-3 sm:grid-cols-[auto_minmax(240px,380px)] sm:items-center">
@@ -120,12 +123,12 @@ export function RecipeDetail({
               <button
                 className="grid size-11 place-items-center"
                 onClick={() => updateServings(servings - 1)}
-                title="Decrease servings"
+                title={t('decreaseServings')}
               >
                 <Minus className="size-4" />
               </button>
               <label className="sr-only" htmlFor="servings">
-                Servings
+                {t('servings')}
               </label>
               <input
                 id="servings"
@@ -139,13 +142,13 @@ export function RecipeDetail({
               <button
                 className="grid size-11 place-items-center"
                 onClick={() => updateServings(servings + 1)}
-                title="Increase servings"
+                title={t('increaseServings')}
               >
                 <Plus className="size-4" />
               </button>
             </div>
             <input
-              aria-label="Serving count"
+              aria-label={t('servings')}
               type="range"
               min="1"
               max="20"
@@ -162,13 +165,13 @@ export function RecipeDetail({
           <div className="mb-7 flex items-end justify-between border-b border-[var(--ink)] pb-4">
             <div>
               <p className="text-xs font-bold uppercase text-[var(--muted)]">
-                Measured for {servings}
+                {t('measuredFor')} {servings}
               </p>
               <h2 className="font-display text-4xl font-semibold">
-                Ingredients
+                {t('ingredients')}
               </h2>
             </div>
-            <span className="text-sm text-[var(--muted)]">Metric only</span>
+            <span className="text-sm text-[var(--muted)]">{t('metricOnly')}</span>
           </div>
           <ul className="divide-y divide-[var(--line)]">
             {ingredients.map((ingredient) => (
@@ -194,7 +197,7 @@ export function RecipeDetail({
 
           <div className="mt-10 border-t border-[var(--ink)] pt-5">
             <p className="text-xs font-bold uppercase text-[var(--muted)]">
-              Total nutrition for {servings} servings
+              {t('totalNutrition')} {servings} {t('servings')}
             </p>
             <div className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-md border border-[var(--line)] bg-[var(--line)] sm:grid-cols-5">
               {[
@@ -222,10 +225,10 @@ export function RecipeDetail({
 
         <aside className="bg-[var(--sage)] px-5 py-7 sm:px-8 sm:py-9 lg:self-start">
           <p className="text-xs font-bold uppercase text-[var(--leaf)]">
-            Method
+            {t('method')}
           </p>
           <h2 className="font-display mt-1 text-4xl font-semibold">
-            From prep to plate
+            {t('fromPrepToPlate')}
           </h2>
           <ol className="mt-8 space-y-8">
             {recipe.instructions.map((instruction, index) => (

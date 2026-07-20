@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Manrope, Newsreader } from 'next/font/google'
 import { AppHeader } from '@/components/app-header'
+import { LanguageProvider } from '@/components/language-provider'
 import './globals.css'
 
 const manrope = Manrope({
@@ -30,8 +31,10 @@ export default function RootLayout({
       className={`${manrope.variable} ${newsreader.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-[var(--paper)] text-[var(--ink)]">
-        <AppHeader />
-        {children}
+        <LanguageProvider>
+          <AppHeader />
+          {children}
+        </LanguageProvider>
       </body>
     </html>
   )

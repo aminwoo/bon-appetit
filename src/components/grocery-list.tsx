@@ -22,6 +22,7 @@ import {
 } from '@/lib/types'
 import { aggregateIngredients, scaleIngredient } from '@/lib/units'
 import { cn } from '@/lib/utils'
+import { useLanguage } from '@/components/language-provider'
 
 const categoryOrder: IngredientCategory[] = [
   'Produce',
@@ -55,6 +56,7 @@ function formatAmount(item: GroceryItem) {
 }
 
 export function GroceryList({ meals }: { meals: PlannedMeal[] }) {
+  const { t } = useLanguage()
   const [activeSlots, setActiveSlots] = useState<Set<MealSlot>>(
     () => new Set(mealSlots),
   )
@@ -91,23 +93,23 @@ export function GroceryList({ meals }: { meals: PlannedMeal[] }) {
           <div className="mx-auto max-w-[1500px] px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
             <Button asChild variant="outline" className="mb-8 bg-white/80">
               <Link href="/">
-                <ChevronLeft /> Back to plan
+                <ChevronLeft /> {t('backToPlan')}
               </Link>
             </Button>
             <div className="grid gap-8 lg:grid-cols-[1fr_340px] lg:items-end">
               <div className="rise-in">
                 <p className="text-xs font-bold uppercase text-[var(--ink)]/65">
-                  Week in one bag
+                  {t('weekInOneBag')}
                 </p>
                 <h1 className="font-display mt-2 text-5xl leading-none font-semibold sm:text-7xl">
-                  The grocery run,
+                  {t('groceryRun')}
                   <br />
-                  already sorted.
+                  {t('alreadySorted')}
                 </h1>
               </div>
               <div className="border-l-2 border-[var(--ink)] pl-5">
                 <div className="flex items-end justify-between">
-                  <span className="text-sm font-bold">Shopping progress</span>
+                  <span className="text-sm font-bold">{t('shoppingProgress')}</span>
                   <span className="font-display text-3xl font-semibold">
                     {progress}%
                   </span>
@@ -119,7 +121,7 @@ export function GroceryList({ meals }: { meals: PlannedMeal[] }) {
                   />
                 </div>
                 <p className="mt-2 text-xs text-[var(--ink)]/65">
-                  {checkedCount} of {items.length} items collected
+                  {checkedCount} of {items.length} {t('itemsCollected')}
                 </p>
               </div>
             </div>
@@ -132,10 +134,10 @@ export function GroceryList({ meals }: { meals: PlannedMeal[] }) {
           <div
             className="flex flex-wrap items-center gap-2"
             role="group"
-            aria-label="Include meals"
+            aria-label={t('include')}
           >
             <span className="mr-2 text-xs font-bold uppercase text-[var(--muted)]">
-              Include
+              {t('include')}
             </span>
             {mealSlots.map((slot) => (
               <button
@@ -158,7 +160,7 @@ export function GroceryList({ meals }: { meals: PlannedMeal[] }) {
             size="sm"
             onClick={() => setCheckedKeys(new Set())}
           >
-            <RotateCcw /> Clear checks
+            <RotateCcw /> {t('clearChecks')}
           </Button>
         </div>
       </section>
@@ -167,24 +169,24 @@ export function GroceryList({ meals }: { meals: PlannedMeal[] }) {
         <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="text-xs font-bold uppercase text-[var(--accent)]">
-              Aisle by aisle
+              {t('aisleByAisle')}
             </p>
             <h2 className="font-display mt-1 text-4xl font-semibold">
-              This week’s list
+              {t('thisWeeksList')}
             </h2>
           </div>
           <p className="text-sm text-[var(--muted)]">
-            Quantities combine automatically in metric units.
+            {t('metricQuantities')}
           </p>
         </div>
 
         {items.length === 0 ? (
           <div className="border-y border-[var(--line)] py-20 text-center">
             <p className="font-display text-3xl font-semibold">
-              No meals selected
+              {t('noMealsSelected')}
             </p>
             <p className="mt-2 text-sm text-[var(--muted)]">
-              Choose at least one meal type above.
+              {t('chooseMealType')}
             </p>
           </div>
         ) : (
@@ -206,7 +208,7 @@ export function GroceryList({ meals }: { meals: PlannedMeal[] }) {
                       className="flex items-center gap-2 text-sm font-bold uppercase"
                     >
                       <Icon className="size-4 text-[var(--accent)]" />{' '}
-                      {category}
+                      {t(category.toLowerCase() as 'produce' | 'meat' | 'dairy' | 'pantry' | 'spices')}
                     </h3>
                     <span className="text-xs text-[var(--muted)]">
                       {categoryItems.length}

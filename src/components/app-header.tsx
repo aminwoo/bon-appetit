@@ -4,15 +4,17 @@ import Link from 'next/link'
 import { CalendarDays, CookingPot, ListChecks, Sprout } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { useLanguage } from '@/components/language-provider'
 
 const links = [
-  { href: '/', label: 'Plan', icon: CalendarDays },
-  { href: '/recipes', label: 'Recipes', icon: CookingPot },
-  { href: '/grocery', label: 'Groceries', icon: ListChecks },
+  { href: '/', key: 'plan' as const, icon: CalendarDays },
+  { href: '/recipes', key: 'recipes' as const, icon: CookingPot },
+  { href: '/grocery', key: 'groceries' as const, icon: ListChecks },
 ]
 
 export function AppHeader() {
   const pathname = usePathname()
+  const { language, setLanguage, t } = useLanguage()
 
   return (
     <header className="sticky top-0 z-40 border-b border-[var(--line)] bg-[color:var(--paper)/0.94] backdrop-blur-md">
@@ -30,8 +32,8 @@ export function AppHeader() {
           </span>
         </Link>
 
-        <nav className="flex items-center gap-1" aria-label="Main navigation">
-          {links.map(({ href, label, icon: Icon }) => {
+        <nav className="flex items-center gap-1" aria-label={t('mainNavigation')}>
+          {links.map(({ href, key, icon: Icon }) => {
             const active =
               href === '/'
                 ? pathname === '/'
@@ -47,10 +49,19 @@ export function AppHeader() {
                 )}
               >
                 <Icon className="size-4" />
-                <span className="hidden sm:inline">{label}</span>
+                <span className="hidden sm:inline">{t(key)}</span>
               </Link>
             )
           })}
+          <button
+            type="button"
+            onClick={() => setLanguage(language === 'en' ? 'zh' : 'en')}
+            className="ml-1 flex h-10 items-center gap-1 rounded-md border border-[var(--line)] bg-white px-3 text-xs font-bold text-[var(--muted)] transition-colors hover:text-[var(--ink)]"
+            aria-label={`${t('languageLabel')}: ${language === 'en' ? t('chinese') : t('english')}`}
+            title={t('languageLabel')}
+          >
+            <span>{language === 'en' ? t('chinese') : t('english')}</span>
+          </button>
         </nav>
       </div>
     </header>
