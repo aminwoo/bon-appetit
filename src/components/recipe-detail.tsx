@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import {
   ArrowLeft,
@@ -46,13 +45,11 @@ export function RecipeDetail({
   return (
     <main>
       <section className="relative min-h-[560px] overflow-hidden bg-[var(--ink)] text-white sm:min-h-[620px]">
-        <Image
-          src={image}
-          alt={recipe.title}
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover opacity-65"
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-65"
+          style={{ backgroundImage: `url(${image})` }}
+          role="img"
+          aria-label={recipe.title}
         />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(15,27,20,0.92)_0%,rgba(15,27,20,0.55)_55%,rgba(15,27,20,0.1)_100%)]" />
         <div className="relative mx-auto flex min-h-[560px] max-w-[1500px] flex-col justify-between px-4 py-8 sm:min-h-[620px] sm:px-6 lg:px-8 lg:py-12">

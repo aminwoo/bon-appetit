@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight, Minus, Plus, Users, X } from 'lucide-react'
 import { useState } from 'react'
@@ -239,17 +238,13 @@ export function WeeklyPlanner({
                               href={`/recipes/${meal.recipe.id}`}
                               className="relative h-[66px] overflow-hidden"
                             >
-                              <Image
-                                src={
-                                  recipeImages[meal.recipe.id] ?? fallbackImage
-                                }
-                                alt=""
-                                fill
-                                priority={
-                                  dayIndex === 0 && slot === 'Breakfast'
-                                }
-                                sizes="180px"
-                                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                              <div
+                                className="absolute inset-0 bg-cover bg-center transition-transform duration-300 group-hover:scale-105"
+                                style={{
+                                  backgroundImage: `url(${meal.recipe.imageUrl ?? recipeImages[meal.recipe.id] ?? fallbackImage})`,
+                                }}
+                                role="img"
+                                aria-label={meal.recipe.title}
                               />
                             </Link>
                             <button

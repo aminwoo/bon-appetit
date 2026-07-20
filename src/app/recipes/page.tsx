@@ -1,4 +1,3 @@
-import Image from 'next/image'
 import Link from 'next/link'
 import { Clock3, Plus, Users } from 'lucide-react'
 import { getRecipes } from '@/app/actions'
@@ -50,16 +49,12 @@ export default async function RecipesPage() {
             >
               <Link
                 href={`/recipes/${recipe.id}`}
-                className="relative block aspect-[16/10] overflow-hidden"
-              >
-                <Image
-                  src={recipeImages[recipe.id] ?? fallbackImage}
-                  alt=""
-                  fill
-                  sizes="(max-width: 640px) 100vw, 33vw"
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-              </Link>
+                className="relative block aspect-[16/10] overflow-hidden bg-cover bg-center transition-transform duration-300 group-hover:scale-105"
+                style={{
+                  backgroundImage: `url(${recipe.imageUrl ?? recipeImages[recipe.id] ?? fallbackImage})`,
+                }}
+                aria-label={`View ${recipe.title}`}
+              />
               <div className="p-5">
                 <p className="text-[10px] font-bold uppercase text-[var(--accent)]">
                   {recipe.id.includes('-') && recipe.id.length === 36

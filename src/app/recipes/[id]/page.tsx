@@ -24,7 +24,11 @@ export default async function RecipePage({
   return (
     <RecipeDetail
       recipe={recipe}
-      image={recipeImages[recipe.id] ?? recipeImages['lemon-herb-chicken']}
+      image={
+        recipe.imageUrl ??
+        recipeImages[recipe.id] ??
+        recipeImages['lemon-herb-chicken']
+      }
       isCustom={isCustom}
     />
   )

@@ -29,7 +29,13 @@ Create a Neon project and copy its pooled connection string into `.env.local`:
 
 ```dotenv
 DATABASE_URL=postgresql://user:password@host/database?sslmode=require
+BLOB_READ_WRITE_TOKEN=vercel_blob_rw_xxxxxxxxxxxxxxxxxxxx
 ```
+
+Create a Blob store in the Vercel project and add its read/write token as
+`BLOB_READ_WRITE_TOKEN`. Recipe photos can then be uploaded from the recipe
+editor; uploaded images are stored in Vercel Blob and their public URLs are
+saved with the recipe in Neon. Images must be 10 MB or smaller.
 
 ## Commands
 
@@ -57,7 +63,8 @@ All ingredient quantities are restricted to `g`, `kg`, `ml`, or `l`. Grocery agg
 
 1. Import this repository into Vercel.
 2. Add `DATABASE_URL` in Project Settings > Environment Variables.
-3. Run `npm run db:push` from a trusted local or CI environment.
-4. Deploy. Vercel detects the Next.js build automatically.
+3. Create a Blob store and add its `BLOB_READ_WRITE_TOKEN` in Project Settings > Environment Variables.
+4. Run `npm run db:push` from a trusted local or CI environment.
+5. Deploy. Vercel detects the Next.js build automatically.
 
 The Neon HTTP driver opens no persistent TCP connections, making it suitable for Vercel serverless functions.

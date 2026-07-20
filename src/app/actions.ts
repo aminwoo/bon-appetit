@@ -30,6 +30,7 @@ const ingredientSchema = z.object({
 const recipeSchema = z.object({
   title: z.string().trim().min(2).max(160),
   description: z.string().trim().min(10).max(1000),
+  imageUrl: z.union([z.string().url().max(2048), z.literal('')]),
   prepMinutes: z.number().int().min(0).max(1440),
   cookMinutes: z.number().int().min(0).max(1440),
   baseServings: z.number().int().min(1).max(100),
@@ -54,6 +55,7 @@ function mapRecipe(row: RecipeRow): Recipe {
     id: row.id,
     title: row.title,
     description: row.description,
+    imageUrl: row.imageUrl ?? undefined,
     prepMinutes: row.prepMinutes,
     cookMinutes: row.cookMinutes,
     baseServings: row.baseServings,
@@ -110,6 +112,7 @@ export async function createRecipe(rawInput: unknown) {
       id: recipeId,
       title: input.title,
       description: input.description,
+      imageUrl: input.imageUrl || null,
       prepMinutes: input.prepMinutes,
       cookMinutes: input.cookMinutes,
       baseServings: input.baseServings,
@@ -155,6 +158,7 @@ export async function updateRecipe(rawRecipeId: unknown, rawInput: unknown) {
       .set({
         title: input.title,
         description: input.description,
+        imageUrl: input.imageUrl || null,
         prepMinutes: input.prepMinutes,
         cookMinutes: input.cookMinutes,
         baseServings: input.baseServings,

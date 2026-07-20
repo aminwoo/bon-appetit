@@ -8,7 +8,7 @@ import {
   recipeInstructions,
   recipes,
 } from './schema'
-import { demoRecipes, getDemoPlan } from '@/lib/demo-data'
+import { demoRecipes, getDemoPlan, recipeImages } from '@/lib/demo-data'
 
 async function seed() {
   if (!process.env.DATABASE_URL) {
@@ -28,6 +28,7 @@ async function seed() {
       id: recipeId,
       title: recipe.title,
       description: recipe.description,
+      imageUrl: recipeImages[recipe.id] ?? null,
       prepMinutes: recipe.prepMinutes,
       cookMinutes: recipe.cookMinutes,
       baseServings: recipe.baseServings,

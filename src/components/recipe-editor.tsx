@@ -8,6 +8,7 @@ import {
   Plus,
   Save,
   Trash2,
+  Upload,
 } from 'lucide-react'
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
@@ -25,6 +26,7 @@ type RecipeDraft = Omit<Recipe, 'id'>
 const emptyDraft: RecipeDraft = {
   title: '',
   description: '',
+  imageUrl: '',
   prepMinutes: 15,
   cookMinutes: 30,
   baseServings: 4,
@@ -54,8 +56,38 @@ export function RecipeEditor({
     }
   })
   const [isPending, startTransition] = useTransition()
+  const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const isEditing = Boolean(recipe && !duplicate)
+
+  async function uploadImage(file: File) {
+    setError(null)
+    setIsUploading(true)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const response = await fetch('/api/uploads', {
+        method: 'POST',
+        body: formData,
+      })
+      const result = (await response.json()) as { url?: string; error?: string }
+
+      if (!response.ok || !result.url) {
+        throw new Error(result.error ?? 'Could not upload the image.')
+      }
+
+      setDraft((current) => ({ ...current, imageUrl: result.url }))
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : 'Could not upload the image.',
+      )
+    } finally {
+      setIsUploading(false)
+    }
+  }
 
   function updateIngredient(index: number, patch: Partial<Ingredient>) {
     setDraft((current) => ({
@@ -144,6 +176,50 @@ export function RecipeEditor({
               }
               required
             />
+          </label>
+          <label className="sm:col-span-2">
+            <span className="mb-2 block text-xs font-bold uppercase text-[var(--muted)]">
+              Recipe photo URL
+            </span>
+            <input
+              type="url"
+              className={fieldClass}
+              placeholder="https://images.unsplash.com/..."
+              value={draft.imageUrl ?? ''}
+              onChange={(event) =>
+                setDraft({ ...draft, imageUrl: event.target.value })
+              }
+            />
+            <label className="mt-3 flex w-fit cursor-pointer items-center gap-2 rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm font-semibold transition-colors hover:bg-[var(--paper-deep)] has-[:disabled]:cursor-wait has-[:disabled]:opacity-60">
+              {isUploading ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Upload className="size-4" />
+              )}
+              {isUploading ? 'Uploading…' : 'Upload image'}
+              <input
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                disabled={isUploading}
+                onChange={(event) => {
+                  const file = event.target.files?.[0]
+                  if (file) void uploadImage(file)
+                  event.target.value = ''
+                }}
+              />
+            </label>
+            <span className="mt-2 block text-xs text-[var(--muted)]">
+              Upload an image up to 10 MB, or paste a public image URL.
+            </span>
+            {draft.imageUrl && (
+              <div
+                className="mt-4 aspect-[16/7] overflow-hidden rounded-md bg-[var(--paper-deep)] bg-cover bg-center"
+                style={{ backgroundImage: `url(${draft.imageUrl})` }}
+                role="img"
+                aria-label="Recipe photo preview"
+              />
+            )}
           </label>
           <label className="sm:col-span-2">
             <span className="mb-2 block text-xs font-bold uppercase text-[var(--muted)]">
@@ -388,7 +464,11 @@ export function RecipeEditor({
           >
             {error}
           </p>
-          <Button variant="accent" disabled={isPending} onClick={submit}>
+          <Button
+            variant="accent"
+            disabled={isPending || isUploading}
+            onClick={submit}
+          >
             {isPending ? <Loader2 className="animate-spin" /> : <Save />}{' '}
             {isPending
               ? 'Saving…'
