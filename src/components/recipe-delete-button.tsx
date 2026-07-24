@@ -40,7 +40,7 @@ export function RecipeDeleteButton({ recipeId }: { recipeId: string }) {
           } finally {
             setIsDeleting(false)
           }
-        }
+        }}
       >
         {isDeleting ? <Loader2 className="animate-spin" /> : <Trash2 />} Delete
       </Button>
