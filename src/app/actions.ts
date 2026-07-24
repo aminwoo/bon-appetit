@@ -1,6 +1,6 @@
 'use server'
 
-import { and, asc, eq, gte, inArray, lte } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, inArray, lte } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { getDb } from '@/db'
@@ -11,7 +11,7 @@ import {
   recipeInstructions,
   recipes,
 } from '@/db/schema'
-import { addDays } from '@/lib/dates'
+import { addDays, getMonday, toDateKey } from '@/lib/dates'
 import { publishPlanChange } from '@/lib/ably-server'
 import { aggregateIngredients, scaleIngredient } from '@/lib/units'
 import {
@@ -279,6 +279,15 @@ export async function getWeeklyPlan(rawWeekStart: string) {
     servings: meal.servings,
     recipe: mapRecipe(meal.recipe),
   }))
+}
+
+export async function getLatestPlannedWeekStart() {
+  const latest = await getDb().query.plannedMeals.findFirst({
+    columns: { date: true },
+    orderBy: [desc(plannedMeals.date)],
+  })
+  if (!latest) return null
+  return toDateKey(getMonday(new Date(`${latest.date}T00:00:00.000Z`)))
 }
 
 export async function buildGroceryList(rawInput: unknown) {
