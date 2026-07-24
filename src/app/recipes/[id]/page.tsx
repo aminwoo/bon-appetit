@@ -15,9 +15,9 @@ export default async function RecipePage({
 }) {
   const { id } = await params
   const demoRecipe = demoRecipes.find((item) => item.id === id)
-  const isCustom = !demoRecipe && /^[0-9a-f-]{36}$/i.test(id)
-  const recipe =
-    demoRecipe ?? (isCustom && hasDatabase() ? await getRecipe(id) : null)
+  const customRecipe = !demoRecipe && hasDatabase() ? await getRecipe(id) : null
+  const isCustom = Boolean(customRecipe)
+  const recipe = demoRecipe ?? customRecipe
 
   if (!recipe) notFound()
 
