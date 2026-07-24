@@ -21,8 +21,10 @@ import {
   type Recipe,
 } from '@/lib/types'
 
+const INGREDIENT_NAME_MAX = 200
+
 const ingredientSchema = z.object({
-  name: z.string().trim().min(1).max(120),
+  name: z.string().trim().min(1).max(INGREDIENT_NAME_MAX),
   quantity: z.number().positive(),
   unit: z.enum(metricUnits),
   category: z.enum(ingredientCategories),

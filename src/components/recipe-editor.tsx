@@ -40,6 +40,8 @@ const emptyDraft: RecipeDraft = {
 const fieldClass =
   'h-11 w-full rounded-md border border-[var(--line)] bg-white px-3 text-sm outline-none transition-shadow focus:ring-2 focus:ring-[var(--leaf)]'
 
+const INGREDIENT_NAME_MAX = 200
+
 export function RecipeEditor({
   recipe,
   duplicate = false,
@@ -146,6 +148,16 @@ export function RecipeEditor({
     if (hasBlank || draft.description.trim().length < 10) {
       setError(
         'Add a title, a description of at least 10 characters, and complete every ingredient and step.',
+      )
+      return
+    }
+
+    const oversizedIngredient = draft.ingredients.findIndex(
+      (item) => item.name.trim().length > INGREDIENT_NAME_MAX,
+    )
+    if (oversizedIngredient !== -1) {
+      setError(
+        `Ingredient ${oversizedIngredient + 1} name is too long. Keep ingredient names at ${INGREDIENT_NAME_MAX} characters or fewer.`,
       )
       return
     }
@@ -402,6 +414,7 @@ export function RecipeEditor({
                   placeholder="Ingredient name"
                   className={fieldClass}
                   value={ingredient.name}
+                  maxLength={INGREDIENT_NAME_MAX}
                   onChange={(event) =>
                     updateIngredient(index, { name: event.target.value })
                   }

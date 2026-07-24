@@ -4,8 +4,8 @@ import { hasDatabase } from '@/db'
 import { demoRecipes } from '@/lib/demo-data'
 
 export default async function RecipesPage() {
-  const customRecipes = hasDatabase() ? await getRecipes() : []
-  const allRecipes = [...customRecipes, ...demoRecipes]
+  const databaseReady = hasDatabase()
+  const allRecipes = databaseReady ? await getRecipes() : demoRecipes
 
-  return <RecipeLibrary recipes={allRecipes} databaseReady={hasDatabase()} />
+  return <RecipeLibrary recipes={allRecipes} databaseReady={databaseReady} />
 }

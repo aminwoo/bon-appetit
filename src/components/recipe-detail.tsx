@@ -176,9 +176,9 @@ export function RecipeDetail({
             </span>
           </div>
           <ul className="divide-y divide-[var(--line)]">
-            {ingredients.map((ingredient) => (
+            {ingredients.map((ingredient, index) => (
               <li
-                key={`${ingredient.name}-${ingredient.unit}`}
+                key={`${ingredient.name}-${ingredient.unit}-${index}`}
                 className="grid grid-cols-[1fr_auto] items-baseline gap-4 py-4"
               >
                 <div>
