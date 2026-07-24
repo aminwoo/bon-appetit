@@ -8,6 +8,14 @@ const requestSchema = z.object({ url: z.url() })
 const maxHtmlBytes = 2 * 1024 * 1024
 const maxRedirects = 4
 
+function normalizeImportUrl(rawValue: string) {
+  const parsed = new URL(rawValue.trim())
+  // Some shared RecipeTin URLs include a trailing /anonymous segment.
+  // Strip it so we fetch the canonical recipe page.
+  parsed.pathname = parsed.pathname.replace(/\/anonymous\/?$/i, '/')
+  return parsed.toString()
+}
+
 function isPrivateHost(hostname: string) {
   const host = hostname.toLowerCase()
   if (host === 'localhost' || host.endsWith('.local')) return true
@@ -91,7 +99,8 @@ async function fetchRecipePage(initialUrl: URL) {
 export async function POST(request: Request) {
   try {
     const { url: rawUrl } = requestSchema.parse(await request.json())
-    const html = await fetchRecipePage(await validateUrl(rawUrl))
+    const normalizedUrl = normalizeImportUrl(rawUrl)
+    const html = await fetchRecipePage(await validateUrl(normalizedUrl))
     return NextResponse.json({ recipe: parseRecipeHtml(html) })
   } catch (error) {
     const message =

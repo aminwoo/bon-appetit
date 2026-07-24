@@ -47,6 +47,26 @@ const xiaohongshuHtml = `
   </script>
 `
 
+const escapedEntityHtml = `
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Recipe",
+      "name": "Entity Parse Test",
+      "description": "Ensure HTML entities decode in ingredient strings.",
+      "prepTime": "PT5M",
+      "cookTime": "PT10M",
+      "recipeYield": "2 servings",
+      "recipeIngredient": [
+        "3 &quot;secret&quot; tsp Worcestershire sauce"
+      ],
+      "recipeInstructions": [
+        { "@type": "HowToStep", "text": "Mix and simmer." }
+      ]
+    }
+  </script>
+`
+
 describe('parseRecipeHtml', () => {
   it('imports schema.org recipe data and converts common units to metric', () => {
     const recipe = parseRecipeHtml(recipeHtml)
@@ -96,5 +116,12 @@ describe('parseRecipeHtml', () => {
     expect(recipe.instructions).toEqual([
       'Review the preparation steps in the imported source images.',
     ])
+  })
+
+  it('decodes HTML entities inside ingredient text', () => {
+    const recipe = parseRecipeHtml(escapedEntityHtml)
+
+    expect(recipe.ingredients[0].name).toContain('"secret"')
+    expect(recipe.ingredients[0].name).not.toContain('&quot;')
   })
 })

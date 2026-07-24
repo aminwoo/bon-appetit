@@ -59,13 +59,32 @@ function isRecord(value: unknown): value is JsonRecord {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 }
 
+function decodeHtmlEntities(value: string) {
+  const namedEntities: Record<string, string> = {
+    amp: '&',
+    quot: '"',
+    apos: "'",
+    nbsp: ' ',
+    lt: '<',
+    gt: '>',
+  }
+
+  return value.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (full, entity) => {
+    if (entity[0] === '#') {
+      const isHex = entity[1]?.toLowerCase() === 'x'
+      const digits = isHex ? entity.slice(2) : entity.slice(1)
+      const codePoint = Number.parseInt(digits, isHex ? 16 : 10)
+      return Number.isFinite(codePoint) ? String.fromCodePoint(codePoint) : full
+    }
+
+    return namedEntities[entity.toLowerCase()] ?? full
+  })
+}
+
 function text(value: unknown) {
-  return typeof value === 'string'
-    ? value
-        .replace(/<[^>]*>/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim()
-    : ''
+  if (typeof value !== 'string') return ''
+  const withoutTags = value.replace(/<[^>]*>/g, ' ')
+  return decodeHtmlEntities(withoutTags).replace(/\s+/g, ' ').trim()
 }
 
 function numberFrom(value: unknown) {
