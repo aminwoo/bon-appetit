@@ -1,7 +1,7 @@
 'use client'
 
 import { Loader2, Trash2 } from 'lucide-react'
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { deleteRecipe } from '@/app/actions'
 import { Button } from '@/components/ui/button'
@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 export function RecipeDeleteButton({ recipeId }: { recipeId: string }) {
   const router = useRouter()
   const [confirming, setConfirming] = useState(false)
-  const [isPending, startTransition] = useTransition()
+  const [isDeleting, setIsDeleting] = useState(false)
 
   if (!confirming) {
     return (
@@ -30,16 +30,19 @@ export function RecipeDeleteButton({ recipeId }: { recipeId: string }) {
       <Button
         variant="accent"
         size="sm"
-        disabled={isPending}
-        onClick={() =>
-          startTransition(async () => {
+        disabled={isDeleting}
+        onClick={async () => {
+          setIsDeleting(true)
+          try {
             await deleteRecipe(recipeId)
-            router.push('/recipes')
+            router.replace(`/recipes?deleted=${recipeId}`)
             router.refresh()
-          })
+          } finally {
+            setIsDeleting(false)
+          }
         }
       >
-        {isPending ? <Loader2 className="animate-spin" /> : <Trash2 />} Delete
+        {isDeleting ? <Loader2 className="animate-spin" /> : <Trash2 />} Delete
       </Button>
     </div>
   )

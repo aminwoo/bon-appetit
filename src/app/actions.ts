@@ -207,6 +207,8 @@ export async function deleteRecipe(rawRecipeId: unknown) {
   await getDb().delete(recipes).where(eq(recipes.id, recipeId))
   revalidatePath('/')
   revalidatePath('/recipes')
+  revalidatePath('/recipes', 'page')
+  revalidatePath(`/recipes/${recipeId}`)
   revalidatePath('/grocery')
 }
 
