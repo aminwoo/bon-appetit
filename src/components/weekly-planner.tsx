@@ -472,7 +472,16 @@ export function WeeklyPlanner({
                             ) : (
                               <Camera className="size-3" />
                             )}
-                            {slotPhotos.length > 0 && slotPhotos.length}
+                            <span>
+                              {uploadingSlot === slotKey
+                                ? t('addingPhoto')
+                                : t('takePhoto')}
+                            </span>
+                            {slotPhotos.length > 0 && (
+                              <span aria-label={`${slotPhotos.length} ${t('photos')}`}>
+                                · {slotPhotos.length}
+                              </span>
+                            )}
                           </label>
                         </div>
                         {meal ? (

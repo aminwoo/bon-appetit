@@ -147,6 +147,9 @@ type TranslationKey =
   | 'captureHint'
   | 'noMealPhotos'
   | 'useCameraButtons'
+  | 'takePhoto'
+  | 'addingPhoto'
+  | 'photos'
 
 const translations: Record<Language, Record<TranslationKey, string>> = {
   en: {
@@ -287,9 +290,12 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     mealMoments: 'Meal moments',
     momentsFromWeek: 'A week, in pictures.',
     captureHint:
-      'Use the camera beside any meal slot—planned or spontaneous—to remember what you ate.',
+      'On your phone, tap Take photo to open the rear camera for any planned or spontaneous meal.',
     noMealPhotos: 'Your meal journal is ready.',
-    useCameraButtons: 'Tap a camera beside any meal slot to add your first photo.',
+    useCameraButtons: 'Tap Take photo beside any meal slot to add your first picture.',
+    takePhoto: 'Take photo',
+    addingPhoto: 'Adding…',
+    photos: 'photos',
   },
   zh: {
     plan: '计划',
@@ -425,9 +431,12 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     photoUploadFailed: '无法添加这张餐食照片。',
     mealMoments: '用餐瞬间',
     momentsFromWeek: '用照片记录这一周。',
-    captureHint: '点击任意餐食时段旁的相机，记录计划内或临时享用的餐食。',
+    captureHint: '在手机上点击“拍照”，即可使用后置相机记录计划内或临时享用的餐食。',
     noMealPhotos: '你的用餐相册已准备好。',
-    useCameraButtons: '点击任意餐食时段旁的相机添加第一张照片。',
+    useCameraButtons: '点击任意餐食时段旁的“拍照”添加第一张照片。',
+    takePhoto: '拍照',
+    addingPhoto: '添加中…',
+    photos: '张照片',
   },
 }
 
