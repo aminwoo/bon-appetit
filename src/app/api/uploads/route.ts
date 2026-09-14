@@ -6,6 +6,7 @@ const maxFileSize = 10 * 1024 * 1024
 export async function POST(request: Request) {
   const formData = await request.formData()
   const file = formData.get('file')
+  const folder = formData.get('purpose') === 'meal-photo' ? 'meals' : 'recipes'
 
   if (!(file instanceof File)) {
     return NextResponse.json(
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const blob = await put(`recipes/${file.name}`, file, {
+    const blob = await put(`${folder}/${file.name}`, file, {
       access: 'public',
       addRandomSuffix: true,
       contentType: file.type,

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { aggregateIngredients, scaleIngredient, scaleNutrition } from './units'
+import {
+  aggregateIngredients,
+  convertIngredientToGrams,
+  scaleIngredient,
+  scaleNutrition,
+} from './units'
 
 describe('metric recipe helpers', () => {
   it('scales an ingredient from the recipe base servings', () => {
@@ -19,6 +24,25 @@ describe('metric recipe helpers', () => {
         3,
       ),
     ).toEqual({ calories: 1560, protein: 144, carbs: 126, fats: 54, fiber: 24 })
+  })
+
+  it('converts mass and volume measurements to grams', () => {
+    expect(
+      convertIngredientToGrams({
+        name: 'Milk',
+        quantity: 1.25,
+        unit: 'l',
+        category: 'Dairy',
+      }),
+    ).toMatchObject({ quantity: 1250, unit: 'g' })
+    expect(
+      convertIngredientToGrams({
+        name: 'Flour',
+        quantity: 0.5,
+        unit: 'kg',
+        category: 'Pantry',
+      }),
+    ).toMatchObject({ quantity: 500, unit: 'g' })
   })
 
   it('merges compatible metric units and selects a readable display unit', () => {
@@ -42,8 +66,8 @@ describe('metric recipe helpers', () => {
       }),
       expect.objectContaining({
         name: 'Vegetable stock',
-        quantity: 1.25,
-        unit: 'l',
+        quantity: 1250,
+        unit: 'g',
       }),
     ])
   })

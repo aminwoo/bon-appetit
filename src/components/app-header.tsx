@@ -17,11 +17,11 @@ export function AppHeader() {
   const { language, setLanguage, t } = useLanguage()
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[var(--line)] bg-[color:var(--paper)/0.94] backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-[1500px] items-center justify-between px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-40 border-b border-[var(--line)] bg-[color:var(--paper)/0.90] shadow-[0_1px_12px_rgba(25,39,31,0.04)] backdrop-blur-xl">
+      <div className="mx-auto flex h-16 max-w-[1500px] items-center justify-between px-3 sm:px-6 lg:px-8">
         <Link
           href="/"
-          className="flex items-center gap-2.5"
+          className="flex items-center gap-2.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
           aria-label="Mise home"
         >
           <span className="grid size-9 place-items-center rounded-md bg-[var(--leaf)] text-white">
@@ -46,10 +46,11 @@ export function AppHeader() {
                 key={href}
                 href={href}
                 className={cn(
-                  'flex h-10 items-center gap-2 rounded-md px-3 text-sm font-semibold text-[var(--muted)] transition-colors hover:bg-white hover:text-[var(--ink)] sm:px-4',
+                  'relative flex h-10 items-center gap-2 rounded-lg px-3 text-sm font-semibold text-[var(--muted)] transition-colors outline-none hover:bg-white/70 hover:text-[var(--ink)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] sm:px-4',
                   active &&
-                    'bg-white text-[var(--ink)] shadow-[0_1px_0_rgba(24,39,32,0.08)]',
+                    'bg-white text-[var(--ink)] shadow-[0_1px_4px_rgba(24,39,32,0.08)] after:absolute after:right-3 after:bottom-0 after:left-3 after:h-0.5 after:rounded-full after:bg-[var(--accent)]',
                 )}
+                aria-current={active ? 'page' : undefined}
               >
                 <Icon className="size-4" />
                 <span className="hidden sm:inline">{t(key)}</span>

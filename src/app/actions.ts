@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { getDb } from '@/db'
 import {
   groceryItemChecks,
+  mealPhotos,
   plannedMeals,
   recipeIngredients,
   recipeInstructions,
@@ -13,13 +14,18 @@ import {
 } from '@/db/schema'
 import { addDays, getMonday, toDateKey } from '@/lib/dates'
 import { publishPlanChange } from '@/lib/ably-server'
-import { aggregateIngredients, scaleIngredient } from '@/lib/units'
+import {
+  aggregateIngredients,
+  convertIngredientToGrams,
+  scaleIngredient,
+} from '@/lib/units'
 import {
   ingredientCategories,
   mealSlots,
   metricUnits,
   type Recipe,
 } from '@/lib/types'
+import type { MealPhoto } from '@/lib/types'
 
 const INGREDIENT_NAME_MAX = 200
 
@@ -72,13 +78,15 @@ function mapRecipe(row: RecipeRow): Recipe {
       fats: Number(row.fatsPerServing),
       fiber: Number(row.fiberPerServing),
     },
-    ingredients: row.ingredients.map((ingredient) => ({
-      id: ingredient.id,
-      name: ingredient.name,
-      quantity: Number(ingredient.quantity),
-      unit: ingredient.unit,
-      category: ingredient.category,
-    })),
+    ingredients: row.ingredients.map((ingredient) =>
+      convertIngredientToGrams({
+        id: ingredient.id,
+        name: ingredient.name,
+        quantity: Number(ingredient.quantity),
+        unit: ingredient.unit,
+        category: ingredient.category,
+      }),
+    ),
     instructions: row.instructions.map((instruction) => instruction.body),
   }
 }
@@ -110,6 +118,7 @@ export async function getRecipe(recipeId: string) {
 
 export async function createRecipe(rawInput: unknown) {
   const input = recipeSchema.parse(rawInput)
+  const ingredients = input.ingredients.map(convertIngredientToGrams)
   const db = getDb()
   const recipeId = crypto.randomUUID()
 
@@ -129,7 +138,7 @@ export async function createRecipe(rawInput: unknown) {
       fiberPerServing: String(input.nutrition.fiber),
     }),
     db.insert(recipeIngredients).values(
-      input.ingredients.map((ingredient, position) => ({
+      ingredients.map((ingredient, position) => ({
         recipeId,
         ...ingredient,
         normalizedName: ingredient.name.toLocaleLowerCase(),
@@ -154,6 +163,7 @@ export async function createRecipe(rawInput: unknown) {
 export async function updateRecipe(rawRecipeId: unknown, rawInput: unknown) {
   const recipeId = z.string().uuid().parse(rawRecipeId)
   const input = recipeSchema.parse(rawInput)
+  const ingredients = input.ingredients.map(convertIngredientToGrams)
   const db = getDb()
 
   await db.batch([
@@ -181,7 +191,7 @@ export async function updateRecipe(rawRecipeId: unknown, rawInput: unknown) {
       .delete(recipeInstructions)
       .where(eq(recipeInstructions.recipeId, recipeId)),
     db.insert(recipeIngredients).values(
-      input.ingredients.map((ingredient, position) => ({
+      ingredients.map((ingredient, position) => ({
         recipeId,
         ...ingredient,
         normalizedName: ingredient.name.toLocaleLowerCase(),
@@ -290,6 +300,54 @@ export async function getLatestPlannedWeekStart() {
   return toDateKey(getMonday(new Date(`${latest.date}T00:00:00.000Z`)))
 }
 
+export async function getMealPhotos(rawWeekStart: string): Promise<MealPhoto[]> {
+  const weekStart = z.iso.date().parse(rawWeekStart)
+  let rows: Array<typeof mealPhotos.$inferSelect>
+
+  try {
+    rows = await getDb().query.mealPhotos.findMany({
+      where: and(
+        gte(mealPhotos.date, weekStart),
+        lte(mealPhotos.date, addDays(weekStart, 6)),
+      ),
+      orderBy: [asc(mealPhotos.createdAt)],
+    })
+  } catch (error) {
+    const databaseError =
+      error instanceof Error
+        ? (error.cause as { code?: string } | undefined)
+        : undefined
+    if (databaseError?.code === '42P01') return []
+    throw error
+  }
+
+  return rows.map((photo) => ({
+    id: photo.id,
+    date: photo.date,
+    slot: photo.slot,
+    imageUrl: photo.imageUrl,
+    createdAt: photo.createdAt.toISOString(),
+  }))
+}
+
+export async function addMealPhoto(rawInput: unknown): Promise<MealPhoto> {
+  const input = z
+    .object({
+      date: z.iso.date(),
+      slot: z.enum(mealSlots),
+      imageUrl: z.string().url().max(2048),
+    })
+    .parse(rawInput)
+  const id = crypto.randomUUID()
+  const createdAt = new Date()
+
+  await getDb().insert(mealPhotos).values({ id, ...input, createdAt })
+  revalidatePath('/')
+  await publishPlanChange(input.date, 'meal-photo-added')
+
+  return { id, ...input, createdAt: createdAt.toISOString() }
+}
+
 export async function buildGroceryList(rawInput: unknown) {
   const input = z
     .object({
@@ -329,9 +387,11 @@ export async function buildGroceryList(rawInput: unknown) {
         meal.servings,
         meal.recipe.baseServings,
       ),
-      checked: checkedKeys.has(
-        `${ingredient.normalizedName}:${ingredient.unit === 'kg' ? 'g' : ingredient.unit === 'l' ? 'ml' : ingredient.unit}`,
-      ),
+      checked:
+        checkedKeys.has(`${ingredient.normalizedName}:g`) ||
+        checkedKeys.has(
+          `${ingredient.normalizedName}:${ingredient.unit === 'kg' ? 'g' : ingredient.unit === 'l' ? 'ml' : ingredient.unit}`,
+        ),
     })),
   )
   return aggregateIngredients(scaled)

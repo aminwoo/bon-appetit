@@ -49,6 +49,14 @@ export type PlannedMeal = {
   recipe: Recipe
 }
 
+export type MealPhoto = {
+  id: string
+  date: string
+  slot: MealSlot
+  imageUrl: string
+  createdAt: string
+}
+
 export type GroceryItem = Ingredient & {
   key: string
   checked: boolean

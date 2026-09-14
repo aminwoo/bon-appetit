@@ -172,20 +172,18 @@ function parseIngredient(rawValue: unknown): Ingredient | null {
     const grams = quantity * massUnits[sourceUnit]
     return {
       name,
-      quantity: Number((grams >= 1000 ? grams / 1000 : grams).toFixed(2)),
-      unit: grams >= 1000 ? 'kg' : 'g',
+      quantity: Number(grams.toFixed(2)),
+      unit: 'g',
       category: categoryFor(name),
     }
   }
 
   if (sourceUnit && sourceUnit in volumeUnits) {
-    const milliliters = quantity * volumeUnits[sourceUnit]
+    const grams = quantity * volumeUnits[sourceUnit]
     return {
       name,
-      quantity: Number(
-        (milliliters >= 1000 ? milliliters / 1000 : milliliters).toFixed(2),
-      ),
-      unit: milliliters >= 1000 ? 'l' : 'ml',
+      quantity: Number(grams.toFixed(2)),
+      unit: 'g',
       category: categoryFor(name),
     }
   }

@@ -23,6 +23,7 @@ import {
 import { aggregateIngredients, scaleIngredient } from '@/lib/units'
 import { cn } from '@/lib/utils'
 import { useLanguage } from '@/components/language-provider'
+import { CostEstimator } from '@/components/cost-estimator'
 
 const categoryOrder: IngredientCategory[] = [
   'Produce',
@@ -130,6 +131,8 @@ export function GroceryList({ meals }: { meals: PlannedMeal[] }) {
           </div>
         </div>
       </section>
+
+      <CostEstimator items={items} />
 
       <section className="border-b border-[var(--line)] bg-white">
         <div className="mx-auto flex max-w-[1500px] flex-wrap items-center justify-between gap-4 px-4 py-5 sm:px-6 lg:px-8">

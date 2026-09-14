@@ -118,6 +118,35 @@ type TranslationKey =
   | 'importRecipe'
   | 'importingRecipe'
   | 'importHint'
+  | 'recipesSaved'
+  | 'averageMinutes'
+  | 'searchRecipes'
+  | 'searchPlaceholder'
+  | 'clearSearch'
+  | 'filterByTime'
+  | 'allTimes'
+  | 'underThirty'
+  | 'thirtyToSixty'
+  | 'overSixty'
+  | 'sortBy'
+  | 'featured'
+  | 'quickest'
+  | 'alphabetical'
+  | 'highestProtein'
+  | 'recipesFound'
+  | 'resetFilters'
+  | 'noRecipesFound'
+  | 'tryAnotherSearch'
+  | 'momentsCaptured'
+  | 'captureMeal'
+  | 'photoMustBeImage'
+  | 'photoTooLarge'
+  | 'photoUploadFailed'
+  | 'mealMoments'
+  | 'momentsFromWeek'
+  | 'captureHint'
+  | 'noMealPhotos'
+  | 'useCameraButtons'
 
 const translations: Record<Language, Record<TranslationKey, string>> = {
   en: {
@@ -152,7 +181,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     clearChecks: 'Clear checks',
     aisleByAisle: 'Aisle by aisle',
     thisWeeksList: "This week's list",
-    metricQuantities: 'Quantities combine automatically in metric units.',
+    metricQuantities: 'All quantities combine automatically in grams.',
     noMealsSelected: 'No meals selected',
     chooseMealType: 'Choose at least one meal type above.',
     yourCollection: 'Your collection',
@@ -208,7 +237,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     baseServings: 'Base servings',
     perServingHeading: 'Per serving',
     nutrition: 'Nutrition',
-    metricOnly: 'Metric only',
+    metricOnly: 'Grams only',
     ingredients: 'Ingredients',
     add: 'Add',
     addStep: 'Add step',
@@ -231,6 +260,36 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     importingRecipe: 'Importing…',
     importHint:
       'Paste a recipe page link. Imported quantities are metric estimates, so review them before saving.',
+    recipesSaved: 'recipes saved',
+    averageMinutes: 'avg. minutes',
+    searchRecipes: 'Search recipes',
+    searchPlaceholder: 'Search your collection…',
+    clearSearch: 'Clear search',
+    filterByTime: 'Filter by cooking time',
+    allTimes: 'All',
+    underThirty: '≤ 30 min',
+    thirtyToSixty: '30–60 min',
+    overSixty: '60+ min',
+    sortBy: 'Sort',
+    featured: 'Featured',
+    quickest: 'Quickest',
+    alphabetical: 'A–Z',
+    highestProtein: 'Most protein',
+    recipesFound: 'recipes found',
+    resetFilters: 'Reset filters',
+    noRecipesFound: 'Nothing on the menu yet.',
+    tryAnotherSearch: 'Try another search or remove a time filter.',
+    momentsCaptured: 'moments captured',
+    captureMeal: 'Take a meal photo',
+    photoMustBeImage: 'Choose an image to add to your meal journal.',
+    photoTooLarge: 'Meal photos must be 10 MB or smaller.',
+    photoUploadFailed: 'Could not add this meal photo.',
+    mealMoments: 'Meal moments',
+    momentsFromWeek: 'A week, in pictures.',
+    captureHint:
+      'Use the camera beside any meal slot—planned or spontaneous—to remember what you ate.',
+    noMealPhotos: 'Your meal journal is ready.',
+    useCameraButtons: 'Tap a camera beside any meal slot to add your first photo.',
   },
   zh: {
     plan: '计划',
@@ -264,7 +323,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     clearChecks: '清除勾选',
     aisleByAisle: '按货架分类',
     thisWeeksList: '本周清单',
-    metricQuantities: '数量会自动合并，并以公制单位显示。',
+    metricQuantities: '所有数量都会自动换算为克并合并。',
     noMealsSelected: '尚未选择餐食',
     chooseMealType: '请至少选择上方的一种餐食类型。',
     yourCollection: '你的收藏',
@@ -318,7 +377,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     baseServings: '基础份数',
     perServingHeading: '每份营养',
     nutrition: '营养',
-    metricOnly: '仅限公制',
+    metricOnly: '仅使用克',
     ingredients: '食材',
     add: '添加',
     addStep: '添加步骤',
@@ -340,6 +399,35 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     importRecipe: '导入食谱',
     importingRecipe: '导入中…',
     importHint: '粘贴食谱页面链接。导入的数量为公制估算值，请在保存前检查。',
+    recipesSaved: '份食谱',
+    averageMinutes: '平均分钟',
+    searchRecipes: '搜索食谱',
+    searchPlaceholder: '搜索食谱或食材…',
+    clearSearch: '清除搜索',
+    filterByTime: '按烹饪时间筛选',
+    allTimes: '全部',
+    underThirty: '≤ 30 分钟',
+    thirtyToSixty: '30–60 分钟',
+    overSixty: '60+ 分钟',
+    sortBy: '排序',
+    featured: '精选',
+    quickest: '最快',
+    alphabetical: '名称',
+    highestProtein: '蛋白质最高',
+    recipesFound: '份食谱',
+    resetFilters: '重置筛选',
+    noRecipesFound: '暂时没有符合的食谱。',
+    tryAnotherSearch: '试试其他关键词或移除时间筛选。',
+    momentsCaptured: '个用餐瞬间',
+    captureMeal: '拍摄餐食照片',
+    photoMustBeImage: '请选择图片添加到用餐记录。',
+    photoTooLarge: '餐食照片不得超过 10 MB。',
+    photoUploadFailed: '无法添加这张餐食照片。',
+    mealMoments: '用餐瞬间',
+    momentsFromWeek: '用照片记录这一周。',
+    captureHint: '点击任意餐食时段旁的相机，记录计划内或临时享用的餐食。',
+    noMealPhotos: '你的用餐相册已准备好。',
+    useCameraButtons: '点击任意餐食时段旁的相机添加第一张照片。',
   },
 }
 

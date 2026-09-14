@@ -1,10 +1,10 @@
 import type { GroceryItem, Ingredient, MetricUnit, Nutrition } from './types'
 
-const baseUnits: Record<MetricUnit, { unit: 'g' | 'ml'; factor: number }> = {
-  g: { unit: 'g', factor: 1 },
-  kg: { unit: 'g', factor: 1000 },
-  ml: { unit: 'ml', factor: 1 },
-  l: { unit: 'ml', factor: 1000 },
+const gramsPerUnit: Record<MetricUnit, number> = {
+  g: 1,
+  kg: 1000,
+  ml: 1,
+  l: 1000,
 }
 
 function round(value: number, precision = 1) {
@@ -21,9 +21,22 @@ export function scaleIngredient(
     throw new Error('Serving counts must be greater than zero.')
   }
 
+  const normalized = convertIngredientToGrams(ingredient)
+  return {
+    ...normalized,
+    quantity: round(normalized.quantity * (servings / baseServings)),
+  }
+}
+
+/**
+ * Converts every supported measurement to a scale-friendly gram amount.
+ * Volumes use the kitchen approximation that 1 ml weighs 1 g.
+ */
+export function convertIngredientToGrams(ingredient: Ingredient): Ingredient {
   return {
     ...ingredient,
-    quantity: round(ingredient.quantity * (servings / baseServings)),
+    quantity: round(ingredient.quantity * gramsPerUnit[ingredient.unit], 2),
+    unit: 'g',
   }
 }
 
@@ -44,17 +57,6 @@ export function scaleNutrition(
   }
 }
 
-function displayUnit(quantity: number, unit: 'g' | 'ml') {
-  if (quantity >= 1000) {
-    return {
-      quantity: round(quantity / 1000, 2),
-      unit: unit === 'g' ? ('kg' as const) : ('l' as const),
-    }
-  }
-
-  return { quantity: round(quantity), unit }
-}
-
 export function aggregateIngredients(
   ingredients: Array<Ingredient & { checked?: boolean }>,
 ): GroceryItem[] {
@@ -63,7 +65,6 @@ export function aggregateIngredients(
     {
       name: string
       quantity: number
-      unit: 'g' | 'ml'
       category: Ingredient['category']
       checked: boolean
     }
@@ -71,15 +72,13 @@ export function aggregateIngredients(
 
   for (const ingredient of ingredients) {
     const normalizedName = ingredient.name.trim().toLocaleLowerCase()
-    const converted = baseUnits[ingredient.unit]
-    const key = `${normalizedName}:${converted.unit}`
+    const converted = convertIngredientToGrams(ingredient)
+    const key = `${normalizedName}:g`
     const existing = totals.get(key)
 
     totals.set(key, {
       name: existing?.name ?? ingredient.name.trim(),
-      quantity:
-        (existing?.quantity ?? 0) + ingredient.quantity * converted.factor,
-      unit: converted.unit,
+      quantity: (existing?.quantity ?? 0) + converted.quantity,
       category: existing?.category ?? ingredient.category,
       checked: (existing?.checked ?? false) || (ingredient.checked ?? false),
     })
@@ -90,6 +89,7 @@ export function aggregateIngredients(
     name: item.name,
     category: item.category,
     checked: item.checked,
-    ...displayUnit(item.quantity, item.unit),
+    quantity: round(item.quantity),
+    unit: 'g' as const,
   })).sort((left, right) => left.name.localeCompare(right.name))
 }

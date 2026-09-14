@@ -18,10 +18,10 @@ import { createRecipe, updateRecipe } from '@/app/actions'
 import { Button } from '@/components/ui/button'
 import {
   ingredientCategories,
-  metricUnits,
   type Ingredient,
   type Recipe,
 } from '@/lib/types'
+import { convertIngredientToGrams } from '@/lib/units'
 
 type RecipeDraft = Omit<Recipe, 'id'>
 
@@ -57,6 +57,7 @@ export function RecipeEditor({
     return {
       ...values,
       title: duplicate ? `${values.title} — my version` : values.title,
+      ingredients: values.ingredients.map(convertIngredientToGrams),
     }
   })
   const [isPending, startTransition] = useTransition()
@@ -432,20 +433,12 @@ export function RecipeEditor({
                     })
                   }
                 />
-                <select
+                <span
                   aria-label={`Ingredient ${index + 1} unit`}
-                  className={fieldClass}
-                  value={ingredient.unit}
-                  onChange={(event) =>
-                    updateIngredient(index, {
-                      unit: event.target.value as Ingredient['unit'],
-                    })
-                  }
+                  className={`${fieldClass} flex items-center`}
                 >
-                  {metricUnits.map((unit) => (
-                    <option key={unit}>{unit}</option>
-                  ))}
-                </select>
+                  g
+                </span>
                 <select
                   aria-label={`Ingredient ${index + 1} category`}
                   className={fieldClass}

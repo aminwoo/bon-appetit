@@ -31,6 +31,36 @@ npm run dev
 
 Open `http://localhost:3000`.
 
+## Grocery cost estimates
+
+The grocery page can compare whole-pack basket estimates from Coles and
+Woolworths. Product search and catalogue pricing are provided by WhichGrocer;
+create a key at `https://www.whichgrocer.com/developers` and keep it in the
+server-only environment:
+
+```dotenv
+WHICHGROCER_API_KEY=wg_live_replace_me
+```
+
+The trial API allows one request every five seconds, so `.env.example` defaults
+`WHICHGROCER_REQUEST_DELAY_MS` to `5000`. Paid plans can use a shorter delay.
+
+Costco does not use this catalogue feed. Add a local warehouse pack price in
+the item comparison instead; Bon Appétit keeps that price book in the current
+browser only. All retailer totals are estimates and exclude delivery,
+membership, substitutions, and store-specific availability.
+
+## Monkey Paw integration
+
+Monkey Paw can read the minimal daily meal summary needed for its unified day
+timeline. The endpoint is server-to-server and rejects requests without the
+shared integration secret.
+
+Set `MONKEY_PAW_INTEGRATION_SECRET` here and use the same value for
+`BON_APPETIT_INTEGRATION_SECRET` in Monkey Paw. Configure Monkey Paw's
+`BON_APPETIT_URL` with this app's deployed URL (or `http://localhost:3001`
+when using Monkey Paw's `npm run dev:all`).
+
 Create a Neon project and copy its pooled connection string into `.env.local`:
 
 ```dotenv
@@ -69,7 +99,7 @@ npm run db:seed      # Seed the five built-in recipes into Neon
 - `planned_meals`: one recipe and serving target per date/meal slot
 - `grocery_item_checks`: per-week shopping completion state
 
-All ingredient quantities are restricted to `g`, `kg`, `ml`, or `l`. Grocery aggregation converts mass to grams and volume to milliliters before combining matching normalized names, then displays totals in the most readable compatible metric unit.
+Ingredient inputs and imports accept common metric, imperial, and kitchen units, then normalize them to grams for display, saving, scaling, and grocery aggregation. Volume measurements use the practical kitchen approximation `1 ml = 1 g`.
 
 ## Vercel deployment
 

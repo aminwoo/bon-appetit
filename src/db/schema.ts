@@ -2,6 +2,7 @@ import {
   boolean,
   date,
   integer,
+  index,
   numeric,
   pgEnum,
   pgTable,
@@ -129,6 +130,20 @@ export const groceryItemChecks = pgTable(
       table.itemKey,
     ),
   ],
+)
+
+export const mealPhotos = pgTable(
+  'meal_photos',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    date: date('date', { mode: 'string' }).notNull(),
+    slot: mealSlotEnum('slot').notNull(),
+    imageUrl: text('image_url').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [index('meal_photo_date_slot_idx').on(table.date, table.slot)],
 )
 
 export const recipeRelations = relations(recipes, ({ many }) => ({

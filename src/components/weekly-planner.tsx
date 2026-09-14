@@ -1,10 +1,26 @@
 'use client'
 
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, Minus, Plus, Users, X } from 'lucide-react'
+import {
+  Camera,
+  ChevronLeft,
+  ChevronRight,
+  ImageIcon,
+  Loader2,
+  Minus,
+  Plus,
+  Users,
+  X,
+} from 'lucide-react'
 import { Realtime } from 'ably'
 import { startTransition, useEffect, useState } from 'react'
-import { assignMeal, getWeeklyPlan, removeMeal } from '@/app/actions'
+import {
+  addMealPhoto,
+  assignMeal,
+  getMealPhotos,
+  getWeeklyPlan,
+  removeMeal,
+} from '@/app/actions'
 import { Button } from '@/components/ui/button'
 import { getWeekDates, toDateKey } from '@/lib/dates'
 import { recipeImages } from '@/lib/demo-data'
@@ -12,6 +28,7 @@ import { cn } from '@/lib/utils'
 import { useLanguage } from '@/components/language-provider'
 import {
   mealSlots,
+  type MealPhoto,
   type MealSlot,
   type PlannedMeal,
   type Recipe,
@@ -20,6 +37,7 @@ import {
 type WeeklyPlannerProps = {
   initialWeekStart: string
   initialMeals: PlannedMeal[]
+  initialPhotos: MealPhoto[]
   recipes: Recipe[]
   databaseReady: boolean
 }
@@ -38,6 +56,7 @@ const fallbackImage = recipeImages['lemon-herb-chicken']
 export function WeeklyPlanner({
   initialWeekStart,
   initialMeals,
+  initialPhotos,
   recipes,
   databaseReady,
 }: WeeklyPlannerProps) {
@@ -45,7 +64,9 @@ export function WeeklyPlanner({
     () => new Date(`${initialWeekStart}T00:00:00Z`),
   )
   const [meals, setMeals] = useState(initialMeals)
+  const [photos, setPhotos] = useState(initialPhotos)
   const [editingSlot, setEditingSlot] = useState<string | null>(null)
+  const [uploadingSlot, setUploadingSlot] = useState<string | null>(null)
   const [plannerError, setPlannerError] = useState<string | null>(null)
   const { t } = useLanguage()
   const dates = getWeekDates(weekStart)
@@ -65,20 +86,32 @@ export function WeeklyPlanner({
       authMethod: 'POST',
     })
     const channel = realtime.channels.get(`meal-plan:${toDateKey(weekStart)}`)
+    let disposed = false
 
     async function syncPlan() {
       try {
-        const latestMeals = await getWeeklyPlan(toDateKey(weekStart))
-        startTransition(() => setMeals(latestMeals))
+        const weekKey = toDateKey(weekStart)
+        const [latestMeals, latestPhotos] = await Promise.all([
+          getWeeklyPlan(weekKey),
+          getMealPhotos(weekKey),
+        ])
+        startTransition(() => {
+          setMeals(latestMeals)
+          setPhotos(latestPhotos)
+        })
       } catch (error) {
         console.error('Could not sync realtime meal plan', error)
       }
     }
 
-    void channel.subscribe('plan-changed', syncPlan)
+    void channel.subscribe('plan-changed', syncPlan).catch((error) => {
+      if (!disposed) console.error('Could not connect realtime meal plan', error)
+    })
+    void syncPlan()
     return () => {
+      disposed = true
       channel.unsubscribe('plan-changed', syncPlan)
-      void realtime.close()
+      realtime.close()
     }
   }, [databaseReady, weekStart])
 
@@ -178,8 +211,72 @@ export function WeeklyPlanner({
     }
   }
 
+  async function captureMealPhoto(
+    file: File,
+    date: string,
+    slot: MealSlot,
+  ) {
+    const slotKey = `${date}-${slot}`
+    setUploadingSlot(slotKey)
+    setPlannerError(null)
+
+    try {
+      if (!file.type.startsWith('image/')) {
+        throw new Error(t('photoMustBeImage'))
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        throw new Error(t('photoTooLarge'))
+      }
+
+      if (!databaseReady) {
+        setPhotos((current) => [
+          ...current,
+          {
+            id: `local-${crypto.randomUUID()}`,
+            date,
+            slot,
+            imageUrl: URL.createObjectURL(file),
+            createdAt: new Date().toISOString(),
+          },
+        ])
+        return
+      }
+
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('purpose', 'meal-photo')
+      const response = await fetch('/api/uploads', {
+        method: 'POST',
+        body: formData,
+      })
+      const result = (await response.json()) as {
+        url?: string
+        error?: string
+      }
+      if (!response.ok || !result.url) {
+        throw new Error(result.error ?? t('photoUploadFailed'))
+      }
+
+      const savedPhoto = await addMealPhoto({
+        date,
+        slot,
+        imageUrl: result.url,
+      })
+      setPhotos((current) => [...current, savedPhoto])
+    } catch (error) {
+      setPlannerError(
+        error instanceof Error ? error.message : t('photoUploadFailed'),
+      )
+    } finally {
+      setUploadingSlot(null)
+    }
+  }
+
   const visibleMeals = meals.filter((meal) =>
     dates.some((date) => toDateKey(date) === meal.date),
+  )
+  const visiblePhotos = photos.filter((photo) =>
+    dates.some((date) => toDateKey(date) === photo.date),
   )
   const proteinTotal = visibleMeals.reduce(
     (total, meal) => total + meal.recipe.nutrition.protein * meal.servings,
@@ -205,6 +302,10 @@ export function WeeklyPlanner({
             <div className="min-w-28 border-l border-white/20 pl-4">
               <p className="text-2xl font-bold">{visibleMeals.length}</p>
               <p className="text-xs text-[#aebbb4]">{t('mealsPlanned')}</p>
+            </div>
+            <div className="min-w-28 border-l border-white/20 pl-4">
+              <p className="text-2xl font-bold">{visiblePhotos.length}</p>
+              <p className="text-xs text-[#aebbb4]">{t('momentsCaptured')}</p>
             </div>
             <div className="min-w-28 border-l border-white/20 pl-4">
               <p className="text-2xl font-bold">{Math.round(proteinTotal)} g</p>
@@ -330,14 +431,50 @@ export function WeeklyPlanner({
                   {mealSlots.map((slot) => {
                     const meal = dayMeals.find((item) => item.slot === slot)
                     const slotKey = `${dateKey}-${slot}`
+                    const slotPhotos = visiblePhotos.filter(
+                      (photo) => photo.date === dateKey && photo.slot === slot,
+                    )
+                    const latestPhoto = slotPhotos.at(-1)
                     return (
                       <div
                         key={slot}
                         className="h-44 border-b border-[var(--line)] p-2.5 last:border-b-0"
                       >
-                        <p className="mb-2 text-[10px] font-bold uppercase text-[var(--muted)]">
-                          {slotLabels[slot]}
-                        </p>
+                        <div className="mb-2 flex h-4 items-center justify-between">
+                          <p className="text-[10px] font-bold uppercase text-[var(--muted)]">
+                            {slotLabels[slot]}
+                          </p>
+                          <label
+                            className={cn(
+                              'flex cursor-pointer items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-bold text-[var(--leaf)] transition hover:bg-[var(--sage)]',
+                              uploadingSlot === slotKey &&
+                                'pointer-events-none opacity-60',
+                            )}
+                            title={t('captureMeal')}
+                          >
+                            <input
+                              type="file"
+                              accept="image/*"
+                              capture="environment"
+                              className="sr-only"
+                              disabled={uploadingSlot === slotKey}
+                              aria-label={`${t('captureMeal')}: ${slotLabels[slot]}`}
+                              onChange={(event) => {
+                                const file = event.target.files?.[0]
+                                if (file) {
+                                  void captureMealPhoto(file, dateKey, slot)
+                                }
+                                event.target.value = ''
+                              }}
+                            />
+                            {uploadingSlot === slotKey ? (
+                              <Loader2 className="size-3 animate-spin" />
+                            ) : (
+                              <Camera className="size-3" />
+                            )}
+                            {slotPhotos.length > 0 && slotPhotos.length}
+                          </label>
+                        </div>
                         {meal ? (
                           <div className="group relative flex h-[128px] flex-col overflow-hidden rounded-md bg-[var(--paper-deep)]">
                             <Link
@@ -347,7 +484,7 @@ export function WeeklyPlanner({
                               <div
                                 className="absolute inset-0 bg-cover bg-center transition-transform duration-300 group-hover:scale-105"
                                 style={{
-                                  backgroundImage: `url(${meal.recipe.imageUrl ?? recipeImages[meal.recipe.id] ?? fallbackImage})`,
+                                  backgroundImage: `url(${latestPhoto?.imageUrl ?? meal.recipe.imageUrl ?? recipeImages[meal.recipe.id] ?? fallbackImage})`,
                                 }}
                                 role="img"
                                 aria-label={meal.recipe.title}
@@ -423,10 +560,25 @@ export function WeeklyPlanner({
                         ) : (
                           <button
                             onClick={() => setEditingSlot(slotKey)}
-                            className="grid h-[128px] w-full place-items-center rounded-md border border-dashed border-[var(--line)] text-[var(--muted)] transition-colors hover:border-[var(--leaf)] hover:bg-[var(--sage)] hover:text-[var(--leaf)]"
+                            className={cn(
+                              'grid h-[128px] w-full place-items-center rounded-md border border-dashed border-[var(--line)] bg-cover bg-center text-[var(--muted)] transition-colors hover:border-[var(--leaf)] hover:bg-[var(--sage)] hover:text-[var(--leaf)]',
+                              latestPhoto && 'border-solid',
+                            )}
+                            style={
+                              latestPhoto
+                                ? { backgroundImage: `url(${latestPhoto.imageUrl})` }
+                                : undefined
+                            }
                             title={`${t('addMeal')} ${slotLabels[slot].toLowerCase()}`}
                           >
-                            <Plus className="size-5" />
+                            <span
+                              className={cn(
+                                'grid size-10 place-items-center rounded-full',
+                                latestPhoto && 'bg-white/90 shadow-md',
+                              )}
+                            >
+                              <Plus className="size-5" />
+                            </span>
                           </button>
                         )}
                       </div>
@@ -440,6 +592,57 @@ export function WeeklyPlanner({
         <p className="mt-2 text-xs text-[var(--muted)] lg:hidden">
           {t('swipeWeek')}
         </p>
+
+        <section className="mt-12 border-t border-[var(--ink)] pt-6">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase text-[var(--accent)]">
+                {t('mealMoments')}
+              </p>
+              <h2 className="font-display mt-1 text-3xl font-semibold sm:text-4xl">
+                {t('momentsFromWeek')}
+              </h2>
+            </div>
+            <p className="max-w-md text-sm text-[var(--muted)]">
+              {t('captureHint')}
+            </p>
+          </div>
+
+          {visiblePhotos.length ? (
+            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-7">
+              {[...visiblePhotos].reverse().map((photo) => (
+                <figure
+                  key={photo.id}
+                  className="group overflow-hidden rounded-xl border border-[var(--line)] bg-white shadow-sm"
+                >
+                  <div
+                    className="aspect-square bg-[var(--paper-deep)] bg-cover bg-center transition-transform duration-300 group-hover:scale-[1.02]"
+                    style={{ backgroundImage: `url(${photo.imageUrl})` }}
+                    role="img"
+                    aria-label={`${slotLabels[photo.slot]} ${dateFormatter.format(new Date(`${photo.date}T00:00:00Z`))}`}
+                  />
+                  <figcaption className="flex items-center gap-2 p-2.5">
+                    <ImageIcon className="size-3.5 text-[var(--accent)]" />
+                    <span className="min-w-0 truncate text-[10px] font-bold uppercase text-[var(--muted)]">
+                      {dateFormatter.format(new Date(`${photo.date}T00:00:00Z`))} ·{' '}
+                      {slotLabels[photo.slot]}
+                    </span>
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-6 flex min-h-40 items-center justify-center rounded-xl border border-dashed border-[var(--line)] bg-white/50 px-6 text-center">
+              <div>
+                <Camera className="mx-auto size-6 text-[var(--leaf)]" />
+                <p className="mt-3 text-sm font-semibold">{t('noMealPhotos')}</p>
+                <p className="mt-1 text-xs text-[var(--muted)]">
+                  {t('useCameraButtons')}
+                </p>
+              </div>
+            </div>
+          )}
+        </section>
       </section>
     </main>
   )

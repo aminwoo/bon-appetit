@@ -82,8 +82,8 @@ describe('parseRecipeHtml', () => {
       unit: 'g',
       category: 'Dairy',
     })
-    expect(recipe.ingredients[2]).toMatchObject({ quantity: 15, unit: 'ml' })
-    expect(recipe.ingredients[3]).toMatchObject({ quantity: 2.5, unit: 'ml' })
+    expect(recipe.ingredients[2]).toMatchObject({ quantity: 15, unit: 'g' })
+    expect(recipe.ingredients[3]).toMatchObject({ quantity: 2.5, unit: 'g' })
     expect(recipe.instructions).toEqual([
       'Crush the garlic.',
       'Melt the butter and combine.',
